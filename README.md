@@ -106,9 +106,46 @@ The repository includes a GitHub Actions workflow that automatically deploys to 
 - If your repository name is different, update the `base` path accordingly
 - After deployment, your app will be available at: `https://velixvalhinsen.github.io/WEBAI/`
 
-## 🔧 Backend Proxy Setup (Vercel)
+## 🔧 Backend Proxy Setup (Cloudflare Workers - Recommended)
 
 The backend proxy allows users to use the app without entering an API key. The API key is stored securely on the server.
+
+### Option 1: Cloudflare Workers (FREE & Easy)
+
+1. **Install Wrangler CLI:**
+   ```bash
+   npm install -g wrangler
+   ```
+
+2. **Login to Cloudflare:**
+   ```bash
+   wrangler login
+   ```
+
+3. **Set Environment Variables:**
+   ```bash
+   wrangler secret put GROQ_API_KEY
+   # Enter your Groq API key when prompted
+   
+   # Optional: For OpenAI support
+   wrangler secret put OPENAI_API_KEY
+   ```
+
+4. **Deploy Worker:**
+   ```bash
+   npm run deploy:worker
+   ```
+
+5. **Get Worker URL:**
+   - After deployment, you'll get a URL like: `https://web-ai-proxy.YOUR_SUBDOMAIN.workers.dev`
+   - Copy this URL
+
+6. **Update Frontend:**
+   - Go to GitHub → Settings → Secrets and variables → Actions
+   - Update `VITE_PROXY_URL` secret with your Cloudflare Workers URL
+   - Trigger rebuild GitHub Actions
+
+### Option 2: Vercel (Alternative)
 
 1. **Deploy to Vercel:**
    ```bash
