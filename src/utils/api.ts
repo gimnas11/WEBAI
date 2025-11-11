@@ -297,6 +297,7 @@ async function tryGenerateWithProxy(prompt: string, proxyIndex: number = 0): Pro
     // Check content type to determine if it's an image
     const contentType = response.headers.get('content-type') || '';
     console.log('[ImageGen] Response content-type:', contentType);
+    console.log('[ImageGen] Response status:', response.status);
     
     let blob: Blob;
     
@@ -304,36 +305,48 @@ async function tryGenerateWithProxy(prompt: string, proxyIndex: number = 0): Pro
     if (contentType.startsWith('image/')) {
       // Direct image response
       blob = await response.blob();
-    } else if (contentType.includes('application/json')) {
-      // Some proxies might wrap the response in JSON
-      const jsonData = await response.json();
-      // If the response has a base64 image, decode it
-      if (jsonData.image || jsonData.data) {
-        const base64Data = jsonData.image || jsonData.data;
-        const binaryString = atob(base64Data.replace(/^data:image\/\w+;base64,/, ''));
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        blob = new Blob([bytes], { type: 'image/png' });
-      } else {
-        throw new Error('Response format tidak dikenali');
-      }
+      console.log('[ImageGen] Got direct image blob, type:', blob.type, 'size:', blob.size);
     } else {
-      // Try to get as blob anyway
+      // Try to get as blob first (allorigins.win might return image as blob with wrong content-type)
       blob = await response.blob();
+      console.log('[ImageGen] Got blob, type:', blob.type, 'size:', blob.size);
       
       // Verify it's actually an image blob
-      if (!blob.type.startsWith('image/')) {
-        // Try to read as text to see what we got
-        const text = await blob.text();
-        console.error('[ImageGen] Unexpected response:', text.substring(0, 200));
-        throw new Error('Response bukan gambar yang valid');
+      if (!blob.type || !blob.type.startsWith('image/')) {
+        // Check if blob is empty or invalid
+        if (blob.size === 0) {
+          throw new Error('Response kosong dari server');
+        }
+        
+        // Try to read first bytes to check if it's actually an image
+        const arrayBuffer = await blob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        
+        // Check for image magic numbers (PNG, JPEG, etc)
+        const isPNG = uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && uint8Array[2] === 0x4E && uint8Array[3] === 0x47;
+        const isJPEG = uint8Array[0] === 0xFF && uint8Array[1] === 0xD8;
+        const isGIF = uint8Array[0] === 0x47 && uint8Array[1] === 0x49 && uint8Array[2] === 0x46;
+        
+        if (isPNG || isJPEG || isGIF) {
+          // It's an image, create new blob with correct type
+          const imageType = isPNG ? 'image/png' : isJPEG ? 'image/jpeg' : 'image/gif';
+          blob = new Blob([arrayBuffer], { type: imageType });
+          console.log('[ImageGen] Detected image format:', imageType);
+        } else {
+          // Not an image, try to read as text to see what we got
+          const text = new TextDecoder().decode(uint8Array.slice(0, 200));
+          console.error('[ImageGen] Unexpected response (first 200 chars):', text);
+          throw new Error('Response bukan gambar yang valid');
+        }
       }
     }
     
+    if (!blob || blob.size === 0) {
+      throw new Error('Gambar kosong atau tidak valid');
+    }
+    
     const imageUrl = URL.createObjectURL(blob);
-    console.log('[ImageGen] Image generated successfully, blob type:', blob.type, 'size:', blob.size);
+    console.log('[ImageGen] Image generated successfully, blob type:', blob.type, 'size:', blob.size, 'URL:', imageUrl);
     return { imageUrl };
   } catch (error) {
     // If it's a network/CORS error, try next proxy
