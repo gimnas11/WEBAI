@@ -68,7 +68,7 @@ The built files will be in the `dist` folder, ready for deployment.
    This will:
    - Build the project
    - Deploy to the `gh-pages` branch
-   - Make your app available at `https://[username].github.io/WEBAI-GITHUB/`
+   - Make your app available at `https://velixvalhinsen.github.io/WEBAI/`
 
 ### Method 2: Manual Deployment
 
@@ -90,9 +90,9 @@ The built files will be in the `dist` folder, ready for deployment.
 
 ### Important Notes for GitHub Pages
 
-- The `base` path in `vite.config.ts` is set to `/WEBAI-GITHUB/`
+- The `base` path in `vite.config.ts` is set to `/WEBAI/`
 - If your repository name is different, update the `base` path accordingly
-- After deployment, your app will be available at: `https://[username].github.io/WEBAI-GITHUB/`
+- After deployment, your app will be available at: `https://velixvalhinsen.github.io/WEBAI/`
 
 ## 🛠️ Project Structure
 
