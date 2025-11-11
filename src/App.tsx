@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { ChatWindow } from './components/ChatWindow';
 import { APIKeyModal } from './components/APIKeyModal';
 import { ToastContainer } from './components/ToastContainer';
+import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { useChat } from './hooks/useChat';
 import { useToast } from './hooks/useToast';
 import { storage } from './utils/localStorage';
@@ -161,6 +162,9 @@ function App() {
 
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 }

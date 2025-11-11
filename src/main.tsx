@@ -3,6 +3,14 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // Service worker will be registered automatically by vite-plugin-pwa
+    // This is just for additional handling if needed
+  });
+}
+
 // Error boundary component
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
