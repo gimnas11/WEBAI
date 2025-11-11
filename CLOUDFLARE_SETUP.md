@@ -88,7 +88,7 @@ Jika masih error "API key not found", pastikan:
 3. Klik "Run workflow" → pilih branch `master` → Run workflow
 
 ### 8. Selesai!
-- Setelah deployment selesai, buka `https://velixvalhinsen.github.io/WEBAI/`
+- Setelah deployment selesai, buka `https://gim.github.io/WEBAI/`
 - User bisa langsung chat tanpa perlu masukkan API key!
 
 ## Catatan:

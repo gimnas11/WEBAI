@@ -17,7 +17,7 @@ Write-Host ""
 
 # Minta konfirmasi repository URL
 Write-Host "Masukkan URL repository GitHub kamu:" -ForegroundColor Yellow
-Write-Host "Contoh: https://github.com/velixvalhinsen/WEBAI" -ForegroundColor Gray
+Write-Host "Contoh: https://github.com/gim/WEBAI" -ForegroundColor Gray
 $repoUrl = Read-Host "Repository URL"
 
 if ([string]::IsNullOrWhiteSpace($repoUrl)) {

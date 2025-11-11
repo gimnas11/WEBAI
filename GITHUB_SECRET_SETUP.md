@@ -14,7 +14,7 @@ https://web-ai-proxy.velixaiden.workers.dev
 
 ### Langkah 1: Buka Repository di GitHub
 1. Buka browser dan login ke [GitHub](https://github.com)
-2. Navigasi ke repository kamu: `https://github.com/velixvalhinsen/WEBAI` (atau URL repository kamu)
+2. Navigasi ke repository kamu: `https://github.com/gim/WEBAI` (atau URL repository kamu)
 
 ### Langkah 2: Buka Settings
 1. Di halaman repository, klik tab **Settings** (di bagian atas, sebelah kanan)
@@ -50,7 +50,7 @@ Setelah secret ditambahkan, trigger workflow untuk rebuild:
 
 Setelah deployment selesai:
 
-1. Buka aplikasi di: `https://velixvalhinsen.github.io/WEBAI/`
+1. Buka aplikasi di: `https://gim.github.io/WEBAI/`
 2. Coba chat tanpa memasukkan API key
 3. Jika berhasil, aplikasi akan menggunakan proxy Cloudflare Workers
 

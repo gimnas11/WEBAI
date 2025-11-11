@@ -106,7 +106,7 @@ The repository includes a GitHub Actions workflow that automatically deploys to 
 
 - The `base` path in `vite.config.ts` is set to `/WEBAI/`
 - If your repository name is different, update the `base` path accordingly
-- After deployment, your app will be available at: `https://velixvalhinsen.github.io/WEBAI/`
+- After deployment, your app will be available at: `https://gim.github.io/WEBAI/`
 
 ## 🔧 Backend Proxy Setup (Cloudflare Workers - Recommended)
 
