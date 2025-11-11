@@ -93,7 +93,7 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled, onCopyCod
               <div className="mt-8 pt-6 border-t border-chat-border">
                 <p className="text-xs text-gray-500 mb-2">Tentang Owner</p>
                 <p className="text-sm text-gray-400">
-                  Dibuat dengan ❤️ oleh <span className="text-blue-400 font-semibold">GimnasIrwandi</span>
+                  Dibuat oleh <span className="text-blue-400 font-semibold">GimnasIrwandi</span> <span className="text-blue-400">@_gmns</span>
                 </p>
               </div>
             </div>
