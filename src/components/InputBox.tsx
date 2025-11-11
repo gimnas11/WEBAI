@@ -12,8 +12,11 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.style.height = '44px';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      if (scrollHeight > 44) {
+        textareaRef.current.style.height = `${Math.min(scrollHeight, 128)}px`;
+      }
     }
   }, [input]);
 
@@ -48,13 +51,14 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
               placeholder={disabled ? 'Please set your API key first' : 'Type your message... (Shift+Enter for new line)'}
               disabled={isLoading || disabled}
               rows={1}
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-12 bg-chat-dark border border-chat-border rounded-lg text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed max-h-32 overflow-y-auto text-sm sm:text-base min-h-[44px] leading-normal"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-12 bg-chat-dark border border-chat-border rounded-lg text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed max-h-32 overflow-y-auto text-sm sm:text-base min-h-[44px] leading-[1.5]"
+              style={{ height: '44px' }}
             />
           </div>
           <button
             type="submit"
             disabled={!input.trim() || isLoading || disabled}
-            className="flex-shrink-0 px-4 sm:px-6 h-[44px] sm:h-auto sm:py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base"
+            className="flex-shrink-0 px-4 sm:px-6 h-[44px] bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base"
           >
             {isLoading ? (
               <>
