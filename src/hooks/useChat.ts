@@ -76,7 +76,7 @@ export function useChat() {
     storage.deleteAllChats();
   }, []);
 
-  const sendMessage = useCallback(async (content: string, apiKey: string, provider: Provider = 'groq') => {
+  const sendMessage = useCallback(async (content: string, apiKey: string | null, provider: Provider = 'groq') => {
     if (!content.trim() || isLoading) return;
 
     setError(null);

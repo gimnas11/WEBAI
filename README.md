@@ -1,10 +1,10 @@
 # GAI Chat - AI Programming Assistant
 
-A modern, ChatGPT-like web application built with React, Vite, and TailwindCSS. This application provides an intelligent AI programming assistant powered by OpenAI's GPT-4o (the most advanced available model), with features like streaming responses, code syntax highlighting, chat history management, and more.
+A modern, ChatGPT-like web application built with React, Vite, and TailwindCSS. This application provides an intelligent AI programming assistant powered by OpenAI's GPT-4o or Groq's Llama models, with features like streaming responses, code syntax highlighting, chat history management, and more.
 
 ## ✨ Features
 
-- 🤖 **Advanced AI Assistant**: Powered by OpenAI GPT-4o with intelligent system prompts for programming tasks
+- 🤖 **Advanced AI Assistant**: Powered by OpenAI GPT-4o or Groq Llama models with intelligent system prompts for programming tasks
 - 💬 **Chat Interface**: Beautiful, responsive UI similar to ChatGPT
 - 📝 **Chat History**: Create, rename, delete, and manage multiple chat conversations
 - ⚡ **Streaming Responses**: Real-time streaming of AI responses for natural conversation flow
@@ -13,15 +13,38 @@ A modern, ChatGPT-like web application built with React, Vite, and TailwindCSS. 
 - 🌙 **Dark Mode**: Modern dark theme optimized for extended use
 - 💾 **Local Storage**: All chats and settings stored locally in your browser
 - 🔒 **Secure API Key**: API key stored locally, never exposed in source code
+- 🚀 **Proxy Mode**: Optional backend proxy for public use without requiring API keys
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Option 1: Using Backend Proxy (No API Key Required)
 
-- Node.js 18+ and npm/yarn/pnpm
-- OpenAI API Key ([Get one here](https://platform.openai.com/api-keys))
+1. **Deploy Backend to Vercel:**
+   ```bash
+   # Install Vercel CLI
+   npm i -g vercel
+   
+   # Deploy
+   vercel
+   ```
 
-### Installation
+2. **Set Environment Variables in Vercel:**
+   - `GROQ_API_KEY`: Your Groq API key
+   - `OPENAI_API_KEY`: (Optional) Your OpenAI API key
+
+3. **Set Proxy URL in Frontend:**
+   Create a `.env` file:
+   ```env
+   VITE_PROXY_URL=https://your-vercel-app.vercel.app
+   ```
+
+4. **Build and Deploy:**
+   ```bash
+   npm run build
+   npm run deploy
+   ```
+
+### Option 2: Direct API (Requires API Key)
 
 1. **Clone or download this repository**
 
@@ -38,8 +61,8 @@ A modern, ChatGPT-like web application built with React, Vite, and TailwindCSS. 
 4. **Open your browser:**
    Navigate to `http://localhost:5173`
 
-5. **Enter your OpenAI API Key:**
-   - On first launch, you'll be prompted to enter your OpenAI API key
+5. **Enter your API Key:**
+   - On first launch, you'll be prompted to enter your API key
    - The key is stored locally in your browser's localStorage
    - Never shared or sent to any server
 
@@ -53,22 +76,17 @@ The built files will be in the `dist` folder, ready for deployment.
 
 ## 🌐 Deploy to GitHub Pages
 
-### Method 1: Using gh-pages (Recommended)
+### Method 1: Using GitHub Actions (Recommended)
 
-1. **Install gh-pages globally (if not already installed):**
-   ```bash
-   npm install -g gh-pages
-   ```
+The repository includes a GitHub Actions workflow that automatically deploys to GitHub Pages on every push to `master` branch.
 
-2. **Deploy:**
-   ```bash
-   npm run deploy
-   ```
+1. **Enable GitHub Pages:**
+   - Go to repository Settings → Pages
+   - Select "GitHub Actions" as source
 
-   This will:
-   - Build the project
-   - Deploy to the `gh-pages` branch
-   - Make your app available at `https://velixvalhinsen.github.io/WEBAI/`
+2. **Set Environment Variable (if using proxy):**
+   - Go to repository Settings → Secrets and variables → Actions
+   - Add `VITE_PROXY_URL` secret with your Vercel deployment URL
 
 ### Method 2: Manual Deployment
 
@@ -77,16 +95,10 @@ The built files will be in the `dist` folder, ready for deployment.
    npm run build
    ```
 
-2. **Push the `dist` folder to the `gh-pages` branch:**
+2. **Deploy:**
    ```bash
-   git subtree push --prefix dist origin gh-pages
+   npm run deploy
    ```
-
-3. **Enable GitHub Pages:**
-   - Go to your repository settings
-   - Navigate to Pages section
-   - Select `gh-pages` branch as source
-   - Save
 
 ### Important Notes for GitHub Pages
 
@@ -94,9 +106,29 @@ The built files will be in the `dist` folder, ready for deployment.
 - If your repository name is different, update the `base` path accordingly
 - After deployment, your app will be available at: `https://velixvalhinsen.github.io/WEBAI/`
 
+## 🔧 Backend Proxy Setup (Vercel)
+
+The backend proxy allows users to use the app without entering an API key. The API key is stored securely on the server.
+
+1. **Deploy to Vercel:**
+   ```bash
+   vercel
+   ```
+
+2. **Set Environment Variables:**
+   - In Vercel dashboard, go to Settings → Environment Variables
+   - Add `GROQ_API_KEY` with your Groq API key
+   - (Optional) Add `OPENAI_API_KEY` for OpenAI support
+
+3. **Update Frontend:**
+   - Set `VITE_PROXY_URL` environment variable to your Vercel URL
+   - Rebuild and redeploy frontend
+
 ## 🛠️ Project Structure
 
 ```
+├── api/
+│   └── chat.ts              # Vercel serverless function (backend proxy)
 ├── public/
 │   └── Gambar/              # Logo and static assets
 ├── src/
@@ -113,7 +145,7 @@ The built files will be in the `dist` folder, ready for deployment.
 │   ├── prompts/             # AI system prompts
 │   │   └── systemPrompt.ts  # Advanced AI agent prompt
 │   ├── utils/               # Utility functions
-│   │   ├── api.ts           # OpenAI API integration
+│   │   ├── api.ts           # OpenAI/Groq API integration
 │   │   └── localStorage.ts  # Storage management
 │   ├── App.tsx              # Main application component
 │   ├── main.tsx             # Application entry point
@@ -121,6 +153,7 @@ The built files will be in the `dist` folder, ready for deployment.
 ├── index.html
 ├── package.json
 ├── vite.config.ts           # Vite configuration
+├── vercel.json              # Vercel configuration
 ├── tailwind.config.js       # TailwindCSS configuration
 └── tsconfig.json            # TypeScript configuration
 ```
@@ -148,8 +181,9 @@ The app uses TailwindCSS. Modify `tailwind.config.js` and `src/index.css` to cus
 
 ## 🔒 Security & Privacy
 
-- **API Key Storage**: Your OpenAI API key is stored only in your browser's localStorage
-- **No Backend**: This is a fully client-side application - no data is sent to any server except OpenAI
+- **API Key Storage**: Your API key is stored only in your browser's localStorage (when using direct mode)
+- **Backend Proxy**: API keys are stored securely on the server (when using proxy mode)
+- **No Backend**: Direct mode is fully client-side - no data is sent to any server except OpenAI/Groq
 - **Local Storage**: All chat history is stored locally in your browser
 - **No Tracking**: No analytics, tracking, or data collection
 
@@ -169,6 +203,7 @@ The app uses TailwindCSS. Modify `tailwind.config.js` and `src/index.css` to cus
 
 - **404 on GitHub Pages**: Check that the `base` path in `vite.config.ts` matches your repository name
 - **CORS errors**: Make sure you're using the correct base path and the build was successful
+- **Proxy not working**: Check that `VITE_PROXY_URL` is set correctly and backend is deployed
 
 ## 📝 Usage Tips
 
@@ -191,10 +226,10 @@ This project is open source and available for personal and commercial use.
 
 - Built with [React](https://react.dev/)
 - Styled with [TailwindCSS](https://tailwindcss.com/)
-- Powered by [OpenAI](https://openai.com/)
+- Powered by [OpenAI](https://openai.com/) and [Groq](https://groq.com/)
 - Bundled with [Vite](https://vitejs.dev/)
+- Deployed with [Vercel](https://vercel.com/) and [GitHub Pages](https://pages.github.com/)
 
 ---
 
-**Note**: This application requires an OpenAI API key with sufficient credits. You are responsible for any API usage costs.
-
+**Note**: This application requires an API key (either user-provided or via backend proxy) with sufficient credits. You are responsible for any API usage costs.

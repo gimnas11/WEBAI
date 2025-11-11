@@ -4,6 +4,9 @@ import { Message } from './localStorage';
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
+// Backend proxy URL (set this to your Vercel deployment URL or leave empty to use direct API)
+const PROXY_URL = import.meta.env.VITE_PROXY_URL || '';
+
 export type Provider = 'openai' | 'groq';
 
 const getApiUrl = (provider: Provider): string => {
@@ -27,7 +30,7 @@ export interface StreamChunk {
 
 export async function* streamChatCompletion(
   messages: Message[],
-  apiKey: string,
+  apiKey: string | null = null,
   provider: Provider = 'groq',
   onError?: (error: Error) => void
 ): AsyncGenerator<StreamChunk, void, unknown> {
@@ -44,14 +47,24 @@ export async function* streamChatCompletion(
     // Limit context to last 20 messages to avoid token limits
     const limitedMessages = formattedMessages.slice(-20);
 
-    const response = await fetch(getApiUrl(provider), {
+    // Use proxy if available and no API key provided, otherwise use direct API
+    const useProxy = PROXY_URL && !apiKey;
+    const apiEndpoint = useProxy ? `${PROXY_URL}/api/chat` : getApiUrl(provider);
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Only add Authorization header if using direct API with API key
+    if (!useProxy && apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
-        model: getModel(provider),
+        ...(useProxy ? { provider } : { model: getModel(provider) }),
         messages: limitedMessages,
         stream: true,
         temperature: 0.7,

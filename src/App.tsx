@@ -29,10 +29,19 @@ function App() {
   useEffect(() => {
     const savedKey = storage.getApiKey();
     const savedProvider = storage.getProvider();
+    
+    // Check if proxy is available (no API key needed)
+    const proxyUrl = import.meta.env.VITE_PROXY_URL;
+    
     if (savedKey) {
       setApiKey(savedKey);
       setProvider(savedProvider);
+    } else if (proxyUrl) {
+      // Proxy available, no API key needed
+      setApiKey(null);
+      setProvider(savedProvider);
     } else {
+      // No proxy and no API key, show modal
       setShowApiKeyModal(true);
     }
   }, []);
@@ -54,7 +63,9 @@ function App() {
   };
 
   const handleSendMessage = (message: string) => {
-    if (apiKey) {
+    // Can send message if API key exists OR proxy is available
+    const proxyUrl = import.meta.env.VITE_PROXY_URL;
+    if (apiKey || proxyUrl) {
       sendMessage(message, apiKey, provider);
     }
   };
@@ -134,7 +145,7 @@ function App() {
           chat={currentChat}
           onSendMessage={handleSendMessage}
           isLoading={isLoading}
-          disabled={!apiKey}
+          disabled={!apiKey && !import.meta.env.VITE_PROXY_URL}
         />
       </div>
 
