@@ -36,7 +36,7 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
   };
 
   return (
-    <div className="border-t border-chat-border bg-chat-darker sticky bottom-0 z-10">
+    <div className="border-t border-chat-border bg-chat-darker fixed bottom-0 left-0 right-0 md:sticky md:bottom-0 z-20" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}>
       <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-3 sm:p-4">
         <div className="flex flex-row items-end gap-2 sm:gap-3">
           <div className="flex-1 relative w-full">

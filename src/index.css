@@ -94,6 +94,11 @@ pre::-webkit-scrollbar-thumb {
   padding-right: 0.75rem;
 }
 
+/* Safe area support for mobile */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
 /* Prose overrides for markdown */
 .prose {
   color: #e5e7eb;

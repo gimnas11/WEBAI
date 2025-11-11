@@ -34,7 +34,7 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled }: ChatWin
   return (
     <div className="flex-1 flex flex-col bg-chat-dark overflow-hidden">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
         {chat.messages.length === 0 ? (
           <div className="flex items-center justify-center h-full px-4">
             <div className="text-center text-gray-400 max-w-md w-full">
