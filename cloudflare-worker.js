@@ -44,7 +44,7 @@ export default {
       console.log(`[${new Date().toISOString()}] ${request.method} ${path} from origin: ${origin}`);
       
       // Handle image generation endpoint
-      if (path === '/image' || path === '/api/image') {
+      if (path === '/image' || path.endsWith('/image')) {
         let body;
         try {
           body = await request.json();

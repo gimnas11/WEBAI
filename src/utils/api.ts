@@ -254,11 +254,14 @@ export async function generateImage(prompt: string): Promise<ImageGenerationResu
     
     if (useBackendProxy) {
       // Use backend proxy (Cloudflare Worker or Vercel)
+      // Remove trailing slash if present
+      const baseUrl = PROXY_URL.replace(/\/$/, '');
       apiEndpoint = isCloudflareWorker 
-        ? `${PROXY_URL}/image` 
-        : `${PROXY_URL}/api/image`;
+        ? `${baseUrl}/image` 
+        : `${baseUrl}/api/image`;
       requestBody = { prompt };
       console.log('[ImageGen] Using backend proxy:', apiEndpoint);
+      console.log('[ImageGen] Request body:', requestBody);
     } else {
       // Direct Hugging Face API (will fail due to CORS, but we'll handle it)
       apiEndpoint = HUGGINGFACE_API_URL;
