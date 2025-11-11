@@ -9,10 +9,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // CORS headers - Allow requests from GitHub Pages
+  const origin = req.headers.origin || '';
+  const allowedOrigins = [
+    'https://velixvalhinsen.github.io',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
+  
+  if (allowedOrigins.some(allowed => origin.includes(allowed)) || !origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
