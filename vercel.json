@@ -2,12 +2,19 @@
   "functions": {
     "api/chat.ts": {
       "maxDuration": 60
+    },
+    "api/test.ts": {
+      "maxDuration": 10
     }
   },
   "rewrites": [
     {
       "source": "/api/chat",
       "destination": "/api/chat.ts"
+    },
+    {
+      "source": "/api/test",
+      "destination": "/api/test.ts"
     }
   ]
 }

@@ -67,6 +67,9 @@ export async function* streamChatCompletion(
 
     let response: Response;
     try {
+      console.log(`[API] Fetching from: ${apiEndpoint}`);
+      console.log(`[API] Using proxy: ${useProxy}, Provider: ${provider}`);
+      
       response = await fetch(apiEndpoint, {
       method: 'POST',
       headers,
@@ -78,18 +81,28 @@ export async function* streamChatCompletion(
         max_tokens: 4000,
       }),
       });
+      
+      console.log(`[API] Response status: ${response.status} ${response.statusText}`);
     } catch (fetchError) {
       // Handle network errors (CORS, connection refused, etc.)
       const errorMessage = fetchError instanceof Error 
         ? fetchError.message 
         : 'Network error';
       
+      console.error(`[API] Fetch error:`, fetchError);
+      console.error(`[API] Endpoint: ${apiEndpoint}`);
+      console.error(`[API] Error message: ${errorMessage}`);
+      
       if (useProxy) {
-        throw new Error(
-          `Failed to connect to proxy server (${PROXY_URL}). ` +
-          `This might be a CORS issue or the proxy is down. ` +
-          `Please try using a direct API key instead.`
-        );
+        // More detailed error message
+        let detailedError = `Failed to connect to proxy server (${PROXY_URL}). `;
+        if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+          detailedError += `The server might be down or unreachable. `;
+        } else if (errorMessage.includes('CORS')) {
+          detailedError += `CORS error detected. `;
+        }
+        detailedError += `Please check: 1) The proxy URL is correct, 2) The endpoint /api/chat exists, 3) Try using a direct API key instead.`;
+        throw new Error(detailedError);
       } else {
         throw new Error(
           `Failed to fetch from API: ${errorMessage}. ` +
