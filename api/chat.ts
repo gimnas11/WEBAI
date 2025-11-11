@@ -27,8 +27,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Log request for debugging
   console.log(`[${new Date().toISOString()}] ${requestMethod} ${req.url} from origin: ${origin}`);
 
-  // Handle preflight OPTIONS request FIRST - return immediately
+  // Handle preflight OPTIONS request FIRST - MUST be before any other checks
   if (requestMethod === 'OPTIONS') {
+    console.log('[CORS] Handling OPTIONS preflight request');
     res.writeHead(200, corsHeaders);
     res.end();
     return;
@@ -40,7 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   // Hanya allow POST requests untuk actual API calls
-  if (requestMethod.toUpperCase() !== 'POST') {
+  if (requestMethod !== 'POST') {
+    console.log(`[ERROR] Method ${requestMethod} not allowed, only POST is allowed`);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
