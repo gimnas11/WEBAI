@@ -54,14 +54,6 @@ function App() {
     setShowApiKeyModal(false);
   };
 
-  const handleResetApiKey = () => {
-    if (confirm('Are you sure you want to reset your API key? You will need to enter it again.')) {
-      storage.removeApiKey();
-      setApiKey(null);
-      setShowApiKeyModal(true);
-    }
-  };
-
   const handleSendMessage = (message: string) => {
     // Can send message if API key exists OR proxy is available
     const proxyUrl = import.meta.env.VITE_PROXY_URL;
@@ -101,7 +93,6 @@ function App() {
             deleteAllChats();
           }
         }}
-        onResetApiKey={handleResetApiKey}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
@@ -128,14 +119,6 @@ function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="flex-1">{error}</span>
-              {error.includes('Invalid API key') && (
-                <button
-                  onClick={handleResetApiKey}
-                  className="ml-2 px-2 py-1 text-xs bg-red-800 hover:bg-red-700 rounded transition-colors"
-                >
-                  Reset Key
-                </button>
-              )}
             </div>
           )}
         </header>
