@@ -234,7 +234,9 @@ export async function* streamChatCompletion(
 }
 
 // Hugging Face Inference API untuk image generation
+// Menggunakan CORS proxy karena Hugging Face API tidak support CORS langsung dari browser
 const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
+const CORS_PROXY = 'https://corsproxy.io/?';
 
 export interface ImageGenerationResult {
   imageUrl: string;
@@ -245,7 +247,10 @@ export async function generateImage(prompt: string): Promise<ImageGenerationResu
   try {
     console.log('[ImageGen] Generating image with prompt:', prompt);
     
-    const response = await fetch(HUGGINGFACE_API_URL, {
+    // Use CORS proxy to bypass CORS restrictions
+    const proxyUrl = `${CORS_PROXY}${encodeURIComponent(HUGGINGFACE_API_URL)}`;
+    
+    const response = await fetch(proxyUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
