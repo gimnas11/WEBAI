@@ -236,19 +236,36 @@ export async function* streamChatCompletion(
 // Hugging Face Inference API untuk image generation
 // Menggunakan CORS proxy karena Hugging Face API tidak support CORS langsung dari browser
 const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
-const CORS_PROXY = 'https://corsproxy.io/?';
+// Alternatif CORS proxy jika yang pertama tidak bekerja
+const CORS_PROXIES = [
+  'https://corsproxy.io/?',
+  'https://api.allorigins.win/raw?url=',
+  'https://cors-anywhere.herokuapp.com/',
+];
 
 export interface ImageGenerationResult {
   imageUrl: string;
   error?: string;
 }
 
-export async function generateImage(prompt: string): Promise<ImageGenerationResult> {
+async function tryGenerateWithProxy(prompt: string, proxyIndex: number = 0): Promise<ImageGenerationResult> {
+  if (proxyIndex >= CORS_PROXIES.length) {
+    throw new Error('Semua CORS proxy gagal. Silakan coba lagi nanti.');
+  }
+
+  const proxy = CORS_PROXIES[proxyIndex];
+  let proxyUrl: string;
+  
+  if (proxy.includes('allorigins')) {
+    proxyUrl = `${proxy}${encodeURIComponent(HUGGINGFACE_API_URL)}`;
+  } else if (proxy.includes('corsproxy')) {
+    proxyUrl = `${proxy}${encodeURIComponent(HUGGINGFACE_API_URL)}`;
+  } else {
+    proxyUrl = `${proxy}${HUGGINGFACE_API_URL}`;
+  }
+
   try {
-    console.log('[ImageGen] Generating image with prompt:', prompt);
-    
-    // Use CORS proxy to bypass CORS restrictions
-    const proxyUrl = `${CORS_PROXY}${encodeURIComponent(HUGGINGFACE_API_URL)}`;
+    console.log(`[ImageGen] Trying proxy ${proxyIndex + 1}/${CORS_PROXIES.length}: ${proxy}`);
     
     const response = await fetch(proxyUrl, {
       method: 'POST',
@@ -259,6 +276,44 @@ export async function generateImage(prompt: string): Promise<ImageGenerationResu
         inputs: prompt,
       }),
     });
+
+    if (!response.ok) {
+      // Handle rate limiting or model loading
+      if (response.status === 503) {
+        const errorData = await response.json().catch(() => ({}));
+        const estimatedTime = errorData.estimated_time || 0;
+        throw new Error(`Model sedang loading. Silakan tunggu ${Math.ceil(estimatedTime)} detik dan coba lagi.`);
+      }
+      
+      // Try next proxy if this one fails
+      if (response.status >= 500 && proxyIndex < CORS_PROXIES.length - 1) {
+        return tryGenerateWithProxy(prompt, proxyIndex + 1);
+      }
+      
+      const errorText = await response.text();
+      throw new Error(`Gagal generate gambar: ${response.status} ${response.statusText}. ${errorText}`);
+    }
+
+    // Hugging Face returns image as blob
+    const blob = await response.blob();
+    const imageUrl = URL.createObjectURL(blob);
+    
+    console.log('[ImageGen] Image generated successfully');
+    return { imageUrl };
+  } catch (error) {
+    // If it's a network/CORS error, try next proxy
+    if ((error instanceof TypeError || error instanceof Error) && proxyIndex < CORS_PROXIES.length - 1) {
+      console.log(`[ImageGen] Proxy ${proxyIndex + 1} failed, trying next...`);
+      return tryGenerateWithProxy(prompt, proxyIndex + 1);
+    }
+    throw error;
+  }
+}
+
+export async function generateImage(prompt: string): Promise<ImageGenerationResult> {
+  try {
+    console.log('[ImageGen] Generating image with prompt:', prompt);
+    return await tryGenerateWithProxy(prompt);
 
     if (!response.ok) {
       // Handle rate limiting or model loading
