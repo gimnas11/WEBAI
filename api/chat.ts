@@ -7,37 +7,37 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers - Allow requests from any origin (for public proxy)
   const origin = req.headers.origin || '';
+  const requestMethod = String(req.method || '').toUpperCase();
   
-  // Set CORS headers FIRST, before any other operations
-  // Always set headers, even for OPTIONS
+  // Set CORS headers for ALL requests
+  const corsHeaders: Record<string, string> = {
+    'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+  };
+  
   if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    corsHeaders['Access-Control-Allow-Origin'] = origin;
+    corsHeaders['Access-Control-Allow-Credentials'] = 'true';
   } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'false');
+    corsHeaders['Access-Control-Allow-Origin'] = '*';
+    corsHeaders['Access-Control-Allow-Credentials'] = 'false';
   }
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Max-Age', '86400');
 
   // Log request for debugging
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from origin: ${origin}`);
+  console.log(`[${new Date().toISOString()}] ${requestMethod} ${req.url} from origin: ${origin}`);
 
-  // Handle preflight OPTIONS request - MUST return early with CORS headers
-  const requestMethod: string = String(req.method || '').toUpperCase();
+  // Handle preflight OPTIONS request FIRST - return immediately
   if (requestMethod === 'OPTIONS') {
-    // Explicitly set status and end response for OPTIONS
-    res.writeHead(200, {
-      'Access-Control-Allow-Origin': origin || '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Max-Age': '86400',
-      'Access-Control-Allow-Credentials': origin ? 'true' : 'false',
-    });
+    res.writeHead(200, corsHeaders);
     res.end();
     return;
   }
+  
+  // Set CORS headers for actual requests
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
   // Hanya allow POST requests untuk actual API calls
   if (requestMethod.toUpperCase() !== 'POST') {
