@@ -47,8 +47,8 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled, onCopyCod
       {/* Messages */}
       <div className="flex-1 overflow-y-auto pb-32 md:pb-0">
         {chat.messages.length === 0 ? (
-          <div className="min-h-full flex items-center md:items-start justify-center px-3 sm:px-4 py-6 sm:py-8 md:py-12">
-            <div className="text-center text-gray-400 max-w-2xl w-full py-4 md:py-0">
+          <div className="min-h-full flex items-center md:items-start justify-center px-2 sm:px-4 py-6 sm:py-8 md:py-12">
+            <div className="text-center text-gray-400 max-w-2xl w-full py-4 md:py-0 mx-auto">
               {/* Animated Logo/Icon */}
               <div className="mb-4 sm:mb-6 flex justify-center">
                 <div className="relative">
