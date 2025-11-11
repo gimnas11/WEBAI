@@ -76,6 +76,19 @@ export function useChat() {
     storage.deleteAllChats();
   }, []);
 
+  // Helper function to check if message is asking about Gimnas
+  const isGimnasQuestion = (message: string): boolean => {
+    const normalized = message.toLowerCase().trim();
+    const gimnasPatterns = [
+      /siapa\s+(itu\s+)?gimnas/i,
+      /siapakah\s+gimnas/i,
+      /gimnas\s+itu\s+siapa/i,
+      /who\s+is\s+gimnas/i,
+      /what\s+is\s+gimnas/i,
+    ];
+    return gimnasPatterns.some(pattern => pattern.test(normalized));
+  };
+
   const sendMessage = useCallback(async (content: string, apiKey: string | null, provider: Provider = 'groq') => {
     if (!content.trim() || isLoading) return;
 
@@ -112,29 +125,51 @@ export function useChat() {
     let assistantContent = '';
 
     try {
-      // Stream response
-      for await (const chunk of streamChatCompletion(updatedMessages, apiKey, provider, (err) => {
-        setError(err.message);
-      })) {
-        if (chunk.done) break;
-        assistantContent += chunk.content;
-
-        // Update assistant message in real-time
-        const streamingMessages = [...updatedMessages, {
+      // Check if asking about Gimnas - provide direct response
+      if (isGimnasQuestion(content)) {
+        assistantContent = 'Gimnas adalah pembuat AI ini';
+        
+        // Update assistant message immediately
+        const directMessages = [...updatedMessages, {
           id: assistantMessageId,
           role: 'assistant' as const,
           content: assistantContent,
           timestamp: Date.now(),
         }];
 
-        const streamingChat: Chat = {
+        const directChat: Chat = {
           ...updatedChat,
-          messages: streamingMessages,
+          messages: directMessages,
           updatedAt: Date.now(),
         };
 
-        setCurrentChat(streamingChat);
-        setChats(prev => prev.map(c => c.id === chat.id ? streamingChat : c));
+        setCurrentChat(directChat);
+        setChats(prev => prev.map(c => c.id === chat.id ? directChat : c));
+      } else {
+        // Stream response from API
+        for await (const chunk of streamChatCompletion(updatedMessages, apiKey, provider, (err) => {
+          setError(err.message);
+        })) {
+          if (chunk.done) break;
+          assistantContent += chunk.content;
+
+          // Update assistant message in real-time
+          const streamingMessages = [...updatedMessages, {
+            id: assistantMessageId,
+            role: 'assistant' as const,
+            content: assistantContent,
+            timestamp: Date.now(),
+          }];
+
+          const streamingChat: Chat = {
+            ...updatedChat,
+            messages: streamingMessages,
+            updatedAt: Date.now(),
+          };
+
+          setCurrentChat(streamingChat);
+          setChats(prev => prev.map(c => c.id === chat.id ? streamingChat : c));
+        }
       }
 
       // Final save
