@@ -11,11 +11,13 @@ const getApiUrl = (provider: Provider): string => {
 };
 
 const getModel = (provider: Provider): string => {
-  // Groq models:
-  // - mixtral-8x7b-32768: High-quality model with 32k context (recommended)
-  // - llama-3.1-8b-instant: Fast 8B model (alternative)
-  // Note: llama-3.1-70b-versatile and llama-3.3-70b-versatile may not be available
-  return provider === 'groq' ? 'mixtral-8x7b-32768' : 'gpt-4o';
+  // Groq models (using llama-3.1-8b-instant as it's the most stable and always available):
+  // - llama-3.1-8b-instant: Fast, reliable 8B model (always available)
+  // Alternative models you can try:
+  // - llama-3.1-70b-versatile: Deprecated
+  // - llama-3.3-70b-versatile: May not be available
+  // - mixtral-8x7b-32768: May not be available
+  return provider === 'groq' ? 'llama-3.1-8b-instant' : 'gpt-4o';
 };
 
 export interface StreamChunk {
