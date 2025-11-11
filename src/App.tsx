@@ -4,9 +4,11 @@ import { ChatWindow } from './components/ChatWindow';
 import { APIKeyModal } from './components/APIKeyModal';
 import { useChat } from './hooks/useChat';
 import { storage } from './utils/localStorage';
+import { Provider } from './utils/api';
 
 function App() {
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [provider, setProvider] = useState<Provider>(storage.getProvider());
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -26,16 +28,20 @@ function App() {
   // Check for API key on mount
   useEffect(() => {
     const savedKey = storage.getApiKey();
+    const savedProvider = storage.getProvider();
     if (savedKey) {
       setApiKey(savedKey);
+      setProvider(savedProvider);
     } else {
       setShowApiKeyModal(true);
     }
   }, []);
 
-  const handleSaveApiKey = (key: string) => {
+  const handleSaveApiKey = (key: string, selectedProvider: Provider) => {
     storage.setApiKey(key);
+    storage.setProvider(selectedProvider);
     setApiKey(key);
+    setProvider(selectedProvider);
     setShowApiKeyModal(false);
   };
 
@@ -49,7 +55,7 @@ function App() {
 
   const handleSendMessage = (message: string) => {
     if (apiKey) {
-      sendMessage(message, apiKey);
+      sendMessage(message, apiKey, provider);
     }
   };
 

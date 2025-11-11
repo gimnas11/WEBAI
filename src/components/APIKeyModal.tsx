@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { validateApiKey } from '../utils/api';
+import { validateApiKey, Provider } from '../utils/api';
+import { storage } from '../utils/localStorage';
 
 interface APIKeyModalProps {
-  onSave: (key: string) => void;
+  onSave: (key: string, provider: Provider) => void;
   onClose?: () => void;
 }
 
 export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
   const [apiKey, setApiKey] = useState('');
+  const [provider, setProvider] = useState<Provider>(storage.getProvider());
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,9 +24,10 @@ export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
     setError(null);
 
     try {
-      const isValid = await validateApiKey(apiKey.trim());
+      const isValid = await validateApiKey(apiKey.trim(), provider);
       if (isValid) {
-        onSave(apiKey.trim());
+        storage.setProvider(provider);
+        onSave(apiKey.trim(), provider);
         if (onClose) onClose();
       } else {
         setError('Invalid API key. Please check and try again.');
@@ -46,12 +49,33 @@ export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-white">OpenAI API Key</h2>
+            <h2 className="text-xl font-semibold text-white">API Key</h2>
             <p className="text-sm text-gray-400">Enter your API key to continue</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="provider" className="block text-sm font-medium text-gray-300 mb-2">
+              Provider
+            </label>
+            <select
+              id="provider"
+              value={provider}
+              onChange={(e) => {
+                setProvider(e.target.value as Provider);
+                setError(null);
+              }}
+              className="w-full px-4 py-3 bg-chat-dark border border-chat-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="groq">Groq (FREE - Recommended)</option>
+              <option value="openai">OpenAI (Paid)</option>
+            </select>
+            <p className="mt-2 text-xs text-gray-500">
+              Groq offers free API access with fast responses. No credit card required!
+            </p>
+          </div>
+
           <div>
             <label htmlFor="apiKey" className="block text-sm font-medium text-gray-300 mb-2">
               API Key
@@ -64,7 +88,7 @@ export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
                 setApiKey(e.target.value);
                 setError(null);
               }}
-              placeholder="sk-..."
+              placeholder={provider === 'groq' ? 'gsk_...' : 'sk-...'}
               className="w-full px-4 py-3 bg-chat-dark border border-chat-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               autoFocus
             />
@@ -101,14 +125,27 @@ export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
 
         <div className="mt-4 pt-4 border-t border-chat-border">
           <p className="text-xs text-gray-500 mb-2">Don't have an API key?</p>
-          <a
-            href="https://platform.openai.com/api-keys"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-400 hover:text-blue-300 underline"
-          >
-            Get your API key from OpenAI →
-          </a>
+          <div className="space-y-1">
+            {provider === 'groq' ? (
+              <a
+                href="https://console.groq.com/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-400 hover:text-blue-300 underline block"
+              >
+                Get FREE API key from Groq →
+              </a>
+            ) : (
+              <a
+                href="https://platform.openai.com/api-keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-400 hover:text-blue-300 underline block"
+              >
+                Get your API key from OpenAI →
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>

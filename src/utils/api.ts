@@ -2,6 +2,17 @@ import { SYSTEM_PROMPT } from '../prompts/systemPrompt';
 import { Message } from './localStorage';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+export type Provider = 'openai' | 'groq';
+
+const getApiUrl = (provider: Provider): string => {
+  return provider === 'groq' ? GROQ_API_URL : OPENAI_API_URL;
+};
+
+const getModel = (provider: Provider): string => {
+  return provider === 'groq' ? 'llama-3.1-70b-versatile' : 'gpt-4o';
+};
 
 export interface StreamChunk {
   content: string;
@@ -11,6 +22,7 @@ export interface StreamChunk {
 export async function* streamChatCompletion(
   messages: Message[],
   apiKey: string,
+  provider: Provider = 'groq',
   onError?: (error: Error) => void
 ): AsyncGenerator<StreamChunk, void, unknown> {
   try {
@@ -26,14 +38,14 @@ export async function* streamChatCompletion(
     // Limit context to last 20 messages to avoid token limits
     const limitedMessages = formattedMessages.slice(-20);
 
-    const response = await fetch(OPENAI_API_URL, {
+    const response = await fetch(getApiUrl(provider), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o', // Using GPT-4o as the most advanced available model
+        model: getModel(provider),
         messages: limitedMessages,
         stream: true,
         temperature: 0.7,
@@ -95,16 +107,16 @@ export async function* streamChatCompletion(
   }
 }
 
-export async function validateApiKey(apiKey: string): Promise<boolean> {
+export async function validateApiKey(apiKey: string, provider: Provider = 'groq'): Promise<boolean> {
   try {
-    const response = await fetch(OPENAI_API_URL, {
+    const response = await fetch(getApiUrl(provider), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo-preview',
+        model: provider === 'groq' ? 'llama-3.1-70b-versatile' : 'gpt-4-turbo-preview',
         messages: [{ role: 'user', content: 'test' }],
         max_tokens: 5,
       }),

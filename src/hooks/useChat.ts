@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Chat, Message, storage } from '../utils/localStorage';
-import { streamChatCompletion } from '../utils/api';
+import { streamChatCompletion, Provider } from '../utils/api';
 
 export function useChat() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -76,7 +76,7 @@ export function useChat() {
     storage.deleteAllChats();
   }, []);
 
-  const sendMessage = useCallback(async (content: string, apiKey: string) => {
+  const sendMessage = useCallback(async (content: string, apiKey: string, provider: Provider = 'groq') => {
     if (!content.trim() || isLoading) return;
 
     setError(null);
@@ -113,7 +113,7 @@ export function useChat() {
 
     try {
       // Stream response
-      for await (const chunk of streamChatCompletion(updatedMessages, apiKey, (err) => {
+      for await (const chunk of streamChatCompletion(updatedMessages, apiKey, provider, (err) => {
         setError(err.message);
       })) {
         if (chunk.done) break;

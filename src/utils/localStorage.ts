@@ -16,6 +16,7 @@ export interface Message {
 const CHATS_KEY = 'gai_chats';
 const API_KEY_KEY = 'gai_api_key';
 const CURRENT_CHAT_KEY = 'gai_current_chat';
+const PROVIDER_KEY = 'gai_provider';
 
 export const storage = {
   // API Key management
@@ -29,6 +30,15 @@ export const storage = {
 
   removeApiKey: (): void => {
     localStorage.removeItem(API_KEY_KEY);
+  },
+
+  // Provider management
+  getProvider: (): 'openai' | 'groq' => {
+    return (localStorage.getItem(PROVIDER_KEY) as 'openai' | 'groq') || 'groq';
+  },
+
+  setProvider: (provider: 'openai' | 'groq'): void => {
+    localStorage.setItem(PROVIDER_KEY, provider);
   },
 
   // Chat management
