@@ -23,13 +23,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from origin: ${origin}`);
 
   // Handle preflight OPTIONS request
-  const requestMethod = req.method as string | undefined;
-  if (requestMethod === 'OPTIONS') {
+  const requestMethod: string = String(req.method || '');
+  if (requestMethod.toUpperCase() === 'OPTIONS') {
     return res.status(200).end();
   }
 
   // Hanya allow POST requests untuk actual API calls
-  if (requestMethod !== 'POST') {
+  if (requestMethod.toUpperCase() !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
