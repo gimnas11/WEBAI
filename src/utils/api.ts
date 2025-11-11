@@ -107,8 +107,11 @@ export async function* streamChatCompletion(
   }
 }
 
-export async function validateApiKey(apiKey: string, provider: Provider = 'groq'): Promise<boolean> {
+export async function validateApiKey(apiKey: string, provider: Provider = 'groq'): Promise<{ valid: boolean; error?: string }> {
   try {
+    // Use a simpler model for validation
+    const validationModel = provider === 'groq' ? 'llama-3.1-8b-instant' : 'gpt-3.5-turbo';
+    
     const response = await fetch(getApiUrl(provider), {
       method: 'POST',
       headers: {
@@ -116,15 +119,26 @@ export async function validateApiKey(apiKey: string, provider: Provider = 'groq'
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: provider === 'groq' ? 'llama-3.1-70b-versatile' : 'gpt-4-turbo-preview',
-        messages: [{ role: 'user', content: 'test' }],
+        model: validationModel,
+        messages: [{ role: 'user', content: 'hi' }],
         max_tokens: 5,
       }),
     });
 
-    return response.ok;
-  } catch {
-    return false;
+    if (response.ok) {
+      return { valid: true };
+    }
+
+    // Get error message from response
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+    
+    return { valid: false, error: errorMessage };
+  } catch (error) {
+    return { 
+      valid: false, 
+      error: error instanceof Error ? error.message : 'Network error. Please check your connection.' 
+    };
   }
 }
 

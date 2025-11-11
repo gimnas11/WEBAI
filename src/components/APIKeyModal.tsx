@@ -24,13 +24,13 @@ export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
     setError(null);
 
     try {
-      const isValid = await validateApiKey(apiKey.trim(), provider);
-      if (isValid) {
+      const result = await validateApiKey(apiKey.trim(), provider);
+      if (result.valid) {
         storage.setProvider(provider);
         onSave(apiKey.trim(), provider);
         if (onClose) onClose();
       } else {
-        setError('Invalid API key. Please check and try again.');
+        setError(result.error || 'Invalid API key. Please check and try again.');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to validate API key');
@@ -120,6 +120,22 @@ export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
                 Cancel
               </button>
             )}
+          </div>
+          
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                // Skip validation and save directly
+                storage.setProvider(provider);
+                onSave(apiKey.trim(), provider);
+                if (onClose) onClose();
+              }}
+              disabled={!apiKey.trim()}
+              className="text-xs text-gray-400 hover:text-gray-300 underline disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Skip validation and save anyway
+            </button>
           </div>
         </form>
 
