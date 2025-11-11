@@ -45,13 +45,17 @@ export default {
       console.log(`[Worker] Full URL: ${request.url}, Path: ${path}`);
       
       // Handle image generation endpoint - check path first before parsing body
-      const isImageEndpoint = path === '/image' || path.endsWith('/image') || path.includes('/image');
-      console.log(`[Worker] Is image endpoint: ${isImageEndpoint}`);
+      // Normalize path (remove trailing slash, handle different formats)
+      const normalizedPath = path.replace(/\/$/, '');
+      const isImageEndpoint = normalizedPath === '/image' || normalizedPath.endsWith('/image');
+      console.log(`[Worker] Normalized path: ${normalizedPath}, Is image endpoint: ${isImageEndpoint}`);
       
       if (isImageEndpoint) {
+        console.log('[Worker] Handling image generation request');
         let body;
         try {
           body = await request.json();
+          console.log('[Worker] Image request body:', JSON.stringify(body).substring(0, 100));
         } catch (jsonError) {
           console.error('[Worker] Error parsing JSON:', jsonError);
           return new Response(
@@ -66,6 +70,7 @@ export default {
         const { prompt } = body;
         
         if (!prompt) {
+          console.error('[Worker] Prompt missing in request body');
           return new Response(
             JSON.stringify({ error: 'Prompt is required' }),
             {
@@ -129,9 +134,11 @@ export default {
       }
       
       // Handle chat completion endpoint (existing code)
+      console.log('[Worker] Handling chat completion request');
       let body;
       try {
         body = await request.json();
+        console.log('[Worker] Chat request body keys:', Object.keys(body));
       } catch (jsonError) {
         console.error('[Worker] Error parsing JSON:', jsonError);
         return new Response(
@@ -148,8 +155,13 @@ export default {
       console.log(`[Worker] Provider: ${provider}, Messages count: ${messages?.length || 0}`);
 
       if (!messages || !Array.isArray(messages)) {
+        console.error('[Worker] Invalid messages format. Body keys:', Object.keys(body));
         return new Response(
-          JSON.stringify({ error: 'Invalid messages format' }),
+          JSON.stringify({ 
+            error: 'Invalid messages format',
+            hint: 'Expected { messages: [...], provider: "groq" } but got different format',
+            received_keys: Object.keys(body)
+          }),
           {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
