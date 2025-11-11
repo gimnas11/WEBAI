@@ -314,25 +314,6 @@ export async function generateImage(prompt: string): Promise<ImageGenerationResu
   try {
     console.log('[ImageGen] Generating image with prompt:', prompt);
     return await tryGenerateWithProxy(prompt);
-
-    if (!response.ok) {
-      // Handle rate limiting or model loading
-      if (response.status === 503) {
-        const errorData = await response.json().catch(() => ({}));
-        const estimatedTime = errorData.estimated_time || 0;
-        throw new Error(`Model sedang loading. Silakan tunggu ${Math.ceil(estimatedTime)} detik dan coba lagi.`);
-      }
-      
-      const errorText = await response.text();
-      throw new Error(`Gagal generate gambar: ${response.status} ${response.statusText}. ${errorText}`);
-    }
-
-    // Hugging Face returns image as blob
-    const blob = await response.blob();
-    const imageUrl = URL.createObjectURL(blob);
-    
-    console.log('[ImageGen] Image generated successfully');
-    return { imageUrl };
   } catch (error) {
     console.error('[ImageGen] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Gagal generate gambar';
