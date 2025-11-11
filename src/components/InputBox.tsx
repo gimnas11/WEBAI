@@ -36,9 +36,9 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
   };
 
   return (
-    <div className="border-t border-chat-border bg-chat-darker">
+    <div className="border-t border-chat-border bg-chat-darker sticky bottom-0 z-10">
       <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-3 sm:p-4">
-        <div className="flex flex-col sm:flex-row items-end gap-2 sm:gap-3">
+        <div className="flex flex-row items-end gap-2 sm:gap-3">
           <div className="flex-1 relative w-full">
             <textarea
               ref={textareaRef}
@@ -54,7 +54,7 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
           <button
             type="submit"
             disabled={!input.trim() || isLoading || disabled}
-            className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2 min-h-[44px] touch-manipulation text-sm sm:text-base"
+            className="flex-shrink-0 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2 min-h-[44px] touch-manipulation text-sm sm:text-base"
           >
             {isLoading ? (
               <>
