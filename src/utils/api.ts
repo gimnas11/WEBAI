@@ -5,7 +5,8 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 // Backend proxy URL (set this to your Vercel deployment URL or leave empty to use direct API)
-const PROXY_URL = import.meta.env.VITE_PROXY_URL || '';
+// Remove trailing slash if present
+const PROXY_URL = (import.meta.env.VITE_PROXY_URL || '').replace(/\/$/, '');
 
 export type Provider = 'openai' | 'groq';
 
