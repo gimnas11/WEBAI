@@ -294,11 +294,46 @@ async function tryGenerateWithProxy(prompt: string, proxyIndex: number = 0): Pro
       throw new Error(`Gagal generate gambar: ${response.status} ${response.statusText}. ${errorText}`);
     }
 
-    // Hugging Face returns image as blob
-    const blob = await response.blob();
-    const imageUrl = URL.createObjectURL(blob);
+    // Check content type to determine if it's an image
+    const contentType = response.headers.get('content-type') || '';
+    console.log('[ImageGen] Response content-type:', contentType);
     
-    console.log('[ImageGen] Image generated successfully');
+    let blob: Blob;
+    
+    // Handle different response types from different proxies
+    if (contentType.startsWith('image/')) {
+      // Direct image response
+      blob = await response.blob();
+    } else if (contentType.includes('application/json')) {
+      // Some proxies might wrap the response in JSON
+      const jsonData = await response.json();
+      // If the response has a base64 image, decode it
+      if (jsonData.image || jsonData.data) {
+        const base64Data = jsonData.image || jsonData.data;
+        const binaryString = atob(base64Data.replace(/^data:image\/\w+;base64,/, ''));
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        blob = new Blob([bytes], { type: 'image/png' });
+      } else {
+        throw new Error('Response format tidak dikenali');
+      }
+    } else {
+      // Try to get as blob anyway
+      blob = await response.blob();
+      
+      // Verify it's actually an image blob
+      if (!blob.type.startsWith('image/')) {
+        // Try to read as text to see what we got
+        const text = await blob.text();
+        console.error('[ImageGen] Unexpected response:', text.substring(0, 200));
+        throw new Error('Response bukan gambar yang valid');
+      }
+    }
+    
+    const imageUrl = URL.createObjectURL(blob);
+    console.log('[ImageGen] Image generated successfully, blob type:', blob.type, 'size:', blob.size);
     return { imageUrl };
   } catch (error) {
     // If it's a network/CORS error, try next proxy
