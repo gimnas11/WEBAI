@@ -6,7 +6,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Get request method and origin FIRST
-  const method = req.method || '';
+  const methodStr: string = String(req.method || '').toUpperCase();
   const origin = req.headers.origin || '';
   
   // Build CORS headers
@@ -25,10 +25,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Log request
-  console.log(`[${new Date().toISOString()}] ${method} ${req.url} from origin: ${origin}`);
+  console.log(`[${new Date().toISOString()}] ${methodStr} ${req.url} from origin: ${origin}`);
 
   // Handle OPTIONS preflight request - MUST be first check
-  if (method.toUpperCase() === 'OPTIONS') {
+  if (methodStr === 'OPTIONS') {
     console.log('[CORS] OPTIONS preflight - returning 200 with CORS headers');
     res.writeHead(200, corsHeaders);
     res.end();
@@ -41,8 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   // Only allow POST for actual API calls
-  if (method.toUpperCase() !== 'POST') {
-    console.log(`[ERROR] Method ${method} not allowed`);
+  if (methodStr !== 'POST') {
+    console.log(`[ERROR] Method ${methodStr} not allowed`);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
