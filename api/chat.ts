@@ -29,7 +29,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Hanya allow POST requests untuk actual API calls
-  if (req.method && req.method !== 'POST') {
+  const method = req.method as string;
+  if (method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
