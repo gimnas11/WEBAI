@@ -63,7 +63,7 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled, onCopyCod
 
               <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-white mb-2 sm:mb-3">Welcome to G Chat</h2>
               <p className="mb-4 sm:mb-6 text-xs sm:text-sm md:text-base text-gray-300 px-2">
-                Your AI programming assistant is ready to help you build, debug, and create amazing projects.
+                G Chat adalah aplikasi AI gratis dan Open Source yang siap membantu Anda membangun, debug, dan membuat proyek-proyek yang luar biasa. Berikan selalu dukungan Anda dengan memberikan feedback, star di GitHub, atau berbagi aplikasi ini kepada teman-teman Anda.
               </p>
 
               {/* Chat Templates */}
