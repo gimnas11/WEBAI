@@ -101,7 +101,7 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="h-14 sm:h-16 bg-chat-darker border-b border-chat-border flex items-center justify-between px-3 sm:px-4 md:px-6">
+        <header className="h-14 sm:h-16 bg-chat-darker border-b border-chat-border flex items-center justify-between pl-14 md:pl-3 sm:pl-4 md:px-6 pr-3 sm:pr-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <img
               src={`${import.meta.env.BASE_URL}Gambar/ChatGPT_Image_Nov_11__2025__07_22_25_AM-removebg-preview.png`}
@@ -115,7 +115,7 @@ function App() {
             <h1 className="text-base sm:text-lg font-semibold">GAI Chat</h1>
           </div>
           {error && (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-xs sm:text-sm max-w-[calc(100vw-8rem)] sm:max-w-none">
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-xs sm:text-sm max-w-[calc(100vw-12rem)] sm:max-w-none">
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
