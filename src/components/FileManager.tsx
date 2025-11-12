@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import JSZip from 'jszip';
 import { CodeEditor } from './CodeEditor';
 import { useToast } from '../hooks/useToast';
+import { useAuth } from '../contexts/AuthContext';
+import { fileStorage } from '../utils/fileStorage';
 
 interface FileManagerProps {
   onClose: () => void;
@@ -17,12 +19,76 @@ interface FileNode {
 }
 
 export function FileManager({ onClose, onAskAI }: FileManagerProps) {
+  const { currentUser } = useAuth();
   const [files, setFiles] = useState<FileNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileNode | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { success, error: showError } = useToast();
+
+  // Get user ID for storage
+  const getUserId = (): string => {
+    return currentUser?.uid || 'anonymous';
+  };
+
+  // Load files from storage on mount
+  useEffect(() => {
+    const loadFiles = async () => {
+      if (!currentUser) {
+        setIsLoadingFiles(false);
+        return;
+      }
+
+      try {
+        setIsLoadingFiles(true);
+        const userId = getUserId();
+        const savedFiles = await fileStorage.loadFiles(userId);
+        
+        if (savedFiles && savedFiles.length > 0) {
+          setFiles(savedFiles);
+          success('Files loaded from previous session');
+        }
+
+        // Load expanded folders state
+        const savedExpanded = fileStorage.loadExpandedFolders(userId);
+        setExpandedFolders(savedExpanded);
+      } catch (error) {
+        console.error('Error loading files:', error);
+      } finally {
+        setIsLoadingFiles(false);
+      }
+    };
+
+    loadFiles();
+  }, [currentUser?.uid]); // Reload when user changes
+
+  // Save files to storage whenever they change
+  useEffect(() => {
+    if (files.length > 0 && currentUser && !isLoadingFiles) {
+      const saveFiles = async () => {
+        try {
+          const userId = getUserId();
+          await fileStorage.saveFiles(userId, files);
+        } catch (error) {
+          console.error('Error saving files:', error);
+        }
+      };
+
+      // Debounce save to avoid too many writes
+      const timeoutId = setTimeout(saveFiles, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [files, currentUser?.uid, isLoadingFiles]);
+
+  // Save expanded folders state
+  useEffect(() => {
+    if (currentUser && expandedFolders.size > 0) {
+      const userId = getUserId();
+      fileStorage.saveExpandedFolders(userId, expandedFolders);
+    }
+  }, [expandedFolders, currentUser?.uid]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -255,12 +321,20 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
       <div className="flex-1 flex overflow-hidden">
         {/* File Tree Sidebar */}
         <div className="w-64 border-r border-chat-border overflow-y-auto bg-chat-darker">
-            {files.length === 0 ? (
+            {isLoadingFiles ? (
+              <div className="p-8 text-center text-gray-400">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
+                <p className="text-sm">Loading files...</p>
+              </div>
+            ) : files.length === 0 ? (
               <div className="p-8 text-center text-gray-400">
                 <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 <p className="text-sm">Upload a ZIP file to get started</p>
+                {currentUser && (
+                  <p className="text-xs text-gray-500 mt-2">Files are saved automatically</p>
+                )}
               </div>
             ) : (
               <div className="p-2">{renderFileTree(files)}</div>
@@ -300,8 +374,25 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
                   language={getFileExtension(selectedFile.name)}
                   onChange={(newValue) => {
                     if (selectedFile) {
-                      selectedFile.content = newValue;
-                      setSelectedFile({ ...selectedFile });
+                      // Update file content in the tree
+                      const updateFileContent = (nodes: FileNode[]): FileNode[] => {
+                        return nodes.map(node => {
+                          if (node.path === selectedFile.path && node.type === 'file') {
+                            return { ...node, content: newValue };
+                          }
+                          if (node.children) {
+                            return { ...node, children: updateFileContent(node.children) };
+                          }
+                          return node;
+                        });
+                      };
+                      
+                      const updatedFiles = updateFileContent(files);
+                      setFiles(updatedFiles);
+                      
+                      // Update selected file
+                      const updatedFile = { ...selectedFile, content: newValue };
+                      setSelectedFile(updatedFile);
                     }
                   }}
                 />
