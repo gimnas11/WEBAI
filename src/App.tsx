@@ -12,6 +12,21 @@ import { storage } from './utils/localStorage';
 import { Provider } from './utils/api';
 
 function App() {
+  // Debug: Verify File Manager button exists after render
+  useEffect(() => {
+    const checkButton = () => {
+      const btn = document.getElementById('file-manager-button');
+      if (btn) {
+        console.log('✅ File Manager button FOUND in DOM!', btn);
+        console.log('Button styles:', window.getComputedStyle(btn));
+      } else {
+        console.error('❌ File Manager button NOT FOUND in DOM!');
+      }
+    };
+    // Check immediately and after a short delay
+    checkButton();
+    setTimeout(checkButton, 100);
+  }, []);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [provider, setProvider] = useState<Provider>(storage.getProvider());
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -145,12 +160,13 @@ function App() {
                 <span className="flex-1 truncate">{error}</span>
               </div>
             )}
-            {/* File Manager Button - ALWAYS VISIBLE */}
+            {/* File Manager Button - ALWAYS VISIBLE - NO CONDITIONAL */}
             <button
+              id="file-manager-button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('File Manager button clicked!');
+                console.log('✅ File Manager button clicked!');
                 setShowFileManager(true);
               }}
               className="px-3 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg border-2 border-blue-400 transition-all flex items-center gap-2 text-white font-semibold shadow-lg flex-shrink-0"
@@ -159,7 +175,8 @@ function App() {
                 visibility: 'visible !important',
                 opacity: '1 !important',
                 position: 'relative',
-                zIndex: 1000
+                zIndex: 1000,
+                minWidth: '100px'
               }}
               title="File Manager - Upload ZIP and edit code"
               aria-label="Open File Manager"
