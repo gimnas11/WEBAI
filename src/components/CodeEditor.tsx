@@ -123,7 +123,7 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
         editor.dispose();
       }
     };
-  }, [language, value, onChange]);
+  }, [language]);
 
   // Update editor value when prop changes (only if different)
   useEffect(() => {
