@@ -103,7 +103,7 @@ export function PWAInstallPrompt() {
         title: 'Cara Install di Android',
         steps: [
           '1. Tap menu (⋮) di pojok kanan atas browser',
-          '2. Pilih "Install app" atau "Add to Home screen"',
+          '2. Pilih "Install PWA" atau "Add to Home screen"',
           '3. Tap "Install" pada popup yang muncul',
           '4. Aplikasi akan terinstall dan muncul di home screen'
         ]
