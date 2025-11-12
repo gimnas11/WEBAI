@@ -21,25 +21,64 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
   const { signup, login } = useAuth();
   const { success, error: showError } = useToast();
 
+  // Email validation
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Password strength validation
+  const isStrongPassword = (password: string): boolean => {
+    // At least 6 characters (Firebase minimum)
+    return password.length >= 6;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      // Email validation
+      if (!email.trim()) {
+        showError('Email is required');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        showError('Please enter a valid email address');
+        setIsLoading(false);
+        return;
+      }
+
       if (mode === 'register') {
-        // Validation
-        if (password.length < 6) {
+        // Password validation
+        if (!password) {
+          showError('Password is required');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!isStrongPassword(password)) {
           showError('Password must be at least 6 characters');
           setIsLoading(false);
           return;
         }
+
+        // Confirm password validation
+        if (!confirmPassword) {
+          showError('Please confirm your password');
+          setIsLoading(false);
+          return;
+        }
+
         if (password !== confirmPassword) {
           showError('Passwords do not match');
           setIsLoading(false);
           return;
         }
 
-        await signup(email, password, displayName || undefined);
+        await signup(email.trim(), password, displayName.trim() || undefined);
         success('Account created! Please verify your email before logging in.');
         // Reset form
         setEmail('');
@@ -49,7 +88,14 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
         // Switch to login mode
         setMode('login');
       } else {
-        await login(email, password);
+        // Login validation
+        if (!password) {
+          showError('Password is required');
+          setIsLoading(false);
+          return;
+        }
+
+        await login(email.trim(), password);
         success('Logged in successfully!');
         onSuccess?.();
       }
@@ -59,28 +105,34 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
       
       switch (error.code) {
         case 'auth/email-already-in-use':
-          errorMessage = 'Email already in use';
+          errorMessage = 'Email already in use. Please use a different email or login.';
           break;
         case 'auth/invalid-email':
-          errorMessage = 'Invalid email address';
+          errorMessage = 'Invalid email address. Please check and try again.';
           break;
         case 'auth/weak-password':
-          errorMessage = 'Password is too weak';
+          errorMessage = 'Password is too weak. Please use at least 6 characters.';
           break;
         case 'auth/user-not-found':
-          errorMessage = 'User not found';
+          errorMessage = 'No account found with this email. Please register first.';
           break;
         case 'auth/wrong-password':
-          errorMessage = 'Incorrect password';
+          errorMessage = 'Incorrect password. Please try again.';
           break;
         case 'auth/invalid-credential':
-          errorMessage = 'Invalid email or password';
+          errorMessage = 'Invalid email or password. Please check and try again.';
           break;
         case 'auth/too-many-requests':
-          errorMessage = 'Too many failed attempts. Please try again later';
+          errorMessage = 'Too many failed attempts. Please try again later.';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Network error. Please check your connection and try again.';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'This account has been disabled. Please contact support.';
           break;
         default:
-          errorMessage = error.message || 'An error occurred';
+          errorMessage = error.message || 'An error occurred. Please try again.';
       }
       
       showError(errorMessage);
