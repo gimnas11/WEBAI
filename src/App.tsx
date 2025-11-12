@@ -4,7 +4,6 @@ import { ChatWindow } from './components/ChatWindow';
 import { APIKeyModal } from './components/APIKeyModal';
 import { ToastContainer } from './components/ToastContainer';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
-import { InAppBrowserPrompt } from './components/InAppBrowserPrompt';
 import { UserMenu } from './components/UserMenu';
 import { FileManager } from './components/FileManager';
 import { useChat } from './hooks/useChat';
@@ -250,9 +249,6 @@ function App() {
 
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
-
-      {/* In-App Browser Prompt */}
-      <InAppBrowserPrompt />
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
