@@ -145,20 +145,26 @@ function App() {
                 <span className="flex-1 truncate">{error}</span>
               </div>
             )}
-            {/* File Manager Button - Always visible when logged in */}
+            {/* File Manager Button - Always visible */}
             <button
               onClick={() => {
                 console.log('File Manager button clicked');
                 setShowFileManager(true);
               }}
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg border border-blue-500 transition-colors flex items-center gap-2 text-white"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg border-2 border-blue-500 transition-all flex items-center gap-2 text-white font-medium shadow-lg z-10"
+              style={{ 
+                minWidth: '140px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
               title="File Manager - Upload ZIP and edit code"
               aria-label="Open File Manager"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
-              <span className="hidden sm:inline text-sm font-medium">File Manager</span>
+              <span className="text-sm font-semibold whitespace-nowrap">File Manager</span>
             </button>
             {/* User Menu */}
             <UserMenu />
