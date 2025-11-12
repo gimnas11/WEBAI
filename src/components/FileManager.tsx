@@ -118,7 +118,12 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
 
     // Clear existing files before uploading new one
     if (files.length > 0) {
-      await clearFiles();
+      const userId = getUserId();
+      await fileStorage.deleteFiles(userId);
+      fileStorage.saveExpandedFolders(userId, new Set());
+      setFiles([]);
+      setSelectedFile(null);
+      setExpandedFolders(new Set());
     }
 
     setIsLoading(true);
