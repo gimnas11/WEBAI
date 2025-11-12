@@ -1,6 +1,8 @@
 import { useState, FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
+import { useAlert } from '../hooks/useAlert';
+import { AlertModal } from './AlertModal';
 import { FirebaseError } from 'firebase/app';
 
 interface ForgotPasswordProps {
@@ -14,6 +16,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
   const [emailSent, setEmailSent] = useState(false);
   const { resetPassword } = useAuth();
   const { success, error: showError } = useToast();
+  const { alert, showError: showAlertError, closeAlert } = useAlert();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -22,7 +25,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
     if (!email.trim()) {
       const msg = 'Email wajib diisi';
       showError(msg);
-      alert(msg);
+      showAlertError(msg);
       return;
     }
     
@@ -30,7 +33,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
     if (!emailRegex.test(email)) {
       const msg = 'Format email tidak valid';
       showError(msg);
-      alert(msg);
+      showAlertError(msg);
       return;
     }
     
@@ -59,8 +62,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
       }
       
       showError(errorMessage);
-      // Also show browser alert for better visibility
-      alert(errorMessage);
+      showAlertError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +70,15 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
 
   if (emailSent) {
     return (
-      <div className="w-full">
+      <>
+        <AlertModal
+          isOpen={alert.isOpen}
+          message={alert.message}
+          type={alert.type}
+          onClose={closeAlert}
+          title={alert.title}
+        />
+        <div className="w-full">
         <div className="bg-chat-dark rounded-lg p-4 sm:p-6 text-center">
             <div className="mb-6">
               <div className="mx-auto w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mb-4">
@@ -100,11 +110,21 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
             </p>
           </div>
         </div>
+      </div>
+      </>
     );
   }
 
   return (
-    <div className="w-full">
+    <>
+      <AlertModal
+        isOpen={alert.isOpen}
+        message={alert.message}
+        type={alert.type}
+        onClose={closeAlert}
+        title={alert.title}
+      />
+      <div className="w-full">
       <div className="bg-chat-dark rounded-lg p-4 sm:p-6">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-white mb-2">Reset Password</h2>
@@ -157,7 +177,8 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
             </button>
           </div>
         </div>
-    </div>
+      </div>
+    </>
   );
 }
 

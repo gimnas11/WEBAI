@@ -1,6 +1,8 @@
 import { useState, FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
+import { useAlert } from '../hooks/useAlert';
+import { AlertModal } from './AlertModal';
 import { FirebaseError } from 'firebase/app';
 import { isFirebaseConfigured } from '../config/firebase';
 
@@ -20,6 +22,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { signup, login } = useAuth();
   const { success, error: showError } = useToast();
+  const { alert, showError: showAlertError, closeAlert } = useAlert();
 
   // Email validation
   const isValidEmail = (email: string): boolean => {
@@ -42,7 +45,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
       if (!email.trim()) {
         const msg = 'Email wajib diisi';
         showError(msg);
-        alert(msg);
+        showAlertError(msg);
         setIsLoading(false);
         return;
       }
@@ -50,7 +53,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
       if (!isValidEmail(email)) {
         const msg = 'Format email tidak valid';
         showError(msg);
-        alert(msg);
+        showAlertError(msg);
         setIsLoading(false);
         return;
       }
@@ -60,7 +63,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
         if (!password) {
           const msg = 'Password wajib diisi';
           showError(msg);
-          alert(msg);
+          showAlertError(msg);
           setIsLoading(false);
           return;
         }
@@ -68,7 +71,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
         if (!isStrongPassword(password)) {
           const msg = 'Password minimal 6 karakter';
           showError(msg);
-          alert(msg);
+          showAlertError(msg);
           setIsLoading(false);
           return;
         }
@@ -77,7 +80,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
         if (!confirmPassword) {
           const msg = 'Konfirmasi password wajib diisi';
           showError(msg);
-          alert(msg);
+          showAlertError(msg);
           setIsLoading(false);
           return;
         }
@@ -85,7 +88,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
         if (password !== confirmPassword) {
           const msg = 'Password tidak sama. Silakan periksa kembali.';
           showError(msg);
-          alert(msg);
+          showAlertError(msg);
           setIsLoading(false);
           return;
         }
@@ -104,7 +107,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
         if (!password) {
           const msg = 'Password wajib diisi';
           showError(msg);
-          alert(msg);
+          showAlertError(msg);
           setIsLoading(false);
           return;
         }
@@ -154,8 +157,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
       }
       
       showError(errorMessage);
-      // Also show browser alert for better visibility
-      alert(errorMessage);
+      showAlertError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -209,8 +211,16 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
   }
 
   return (
-    <div className="w-full">
-      <div className="bg-chat-dark rounded-lg p-4 sm:p-6">
+    <>
+      <AlertModal
+        isOpen={alert.isOpen}
+        message={alert.message}
+        type={alert.type}
+        onClose={closeAlert}
+        title={alert.title}
+      />
+      <div className="w-full">
+        <div className="bg-chat-dark rounded-lg p-4 sm:p-6">
           {/* Header */}
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-white mb-2">
@@ -340,7 +350,8 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
             </p>
           </div>
         </div>
-    </div>
+      </div>
+    </>
   );
 }
 
