@@ -8,7 +8,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
-    // monacoEditorPlugin({}), // Temporarily disabled for build
+    // monacoEditorPlugin disabled - using dynamic import instead
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'Gambar/ChatGPT_Image_Nov_11__2025__07_22_25_AM-removebg-preview.png'],

@@ -14,18 +14,30 @@ const loadMonaco = async (): Promise<any> => {
   if (monacoEditor) return monacoEditor;
   if (monacoLoader) return monacoLoader;
   
+  console.log('Loading Monaco Editor...');
+  
   monacoLoader = Promise.race([
-    import('monaco-editor'),
+    import('monaco-editor').then((module) => {
+      console.log('Monaco Editor module loaded:', Object.keys(module));
+      // Handle both default export and named exports
+      const monaco = module.default || module;
+      if (monaco && (monaco.editor || module.editor)) {
+        return monaco.editor ? monaco : { editor: module.editor || monaco };
+      }
+      throw new Error('Monaco Editor API not found in module');
+    }),
     new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Monaco Editor load timeout')), 30000)
+      setTimeout(() => reject(new Error('Monaco Editor load timeout after 30s')), 30000)
     )
   ]).then((monaco: any) => {
-    if (monaco && monaco.editor) {
+    if (monaco && monaco.editor && monaco.editor.create) {
       monacoEditor = monaco;
+      console.log('Monaco Editor ready');
       return monaco;
     }
-    throw new Error('Monaco Editor not properly loaded');
+    throw new Error('Monaco Editor not properly loaded - editor.create not found');
   }).catch((error) => {
+    console.error('Monaco Editor load error:', error);
     monacoLoader = null; // Reset loader on error
     throw error;
   });
