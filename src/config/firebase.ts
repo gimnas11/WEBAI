@@ -7,30 +7,39 @@ import { getAuth, Auth } from 'firebase/auth';
 // JANGAN hardcode API keys di source code!
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
 };
 
 // Validate that all required environment variables are set
-if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
-  console.error('Firebase configuration is missing. Please set all VITE_FIREBASE_* environment variables.');
+const isFirebaseConfigured = firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId;
+
+if (!isFirebaseConfigured) {
+  console.warn('⚠️ Firebase configuration is missing. Authentication features will be disabled.');
+  console.warn('📝 To enable Firebase: Add VITE_FIREBASE_* secrets in GitHub Settings → Secrets and variables → Actions');
 }
 
-// Initialize Firebase
-let app: FirebaseApp;
-let auth: Auth;
+// Initialize Firebase only if configured
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
 
-try {
-  app = initializeApp(firebaseConfig);
-  // Initialize Firebase Authentication and get a reference to the service
-  auth = getAuth(app);
-} catch (error) {
-  console.error('Firebase initialization error:', error);
-  throw error;
+if (isFirebaseConfigured) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    console.log('✅ Firebase initialized successfully');
+  } catch (error) {
+    console.error('❌ Firebase initialization error:', error);
+    // Don't throw - allow app to continue without Firebase
+    app = null;
+    auth = null;
+  }
+} else {
+  console.warn('⚠️ Firebase not initialized - authentication disabled');
 }
 
 export { auth };

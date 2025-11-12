@@ -40,8 +40,12 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFirebaseAvailable] = useState(!!auth);
 
   const signup = async (email: string, password: string, displayName?: string): Promise<UserCredential> => {
+    if (!auth) {
+      throw new Error('Firebase is not configured. Please add VITE_FIREBASE_* secrets in GitHub Settings.');
+    }
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     
     // Update display name if provided
@@ -58,14 +62,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const login = async (email: string, password: string): Promise<UserCredential> => {
+    if (!auth) {
+      throw new Error('Firebase is not configured. Please add VITE_FIREBASE_* secrets in GitHub Settings.');
+    }
     return await signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async (): Promise<void> => {
+    if (!auth) {
+      return; // No-op if Firebase not available
+    }
     await signOut(auth);
   };
 
   const sendVerificationEmail = async (): Promise<void> => {
+    if (!auth) {
+      throw new Error('Firebase is not configured.');
+    }
     if (currentUser && !currentUser.emailVerified) {
       await sendEmailVerification(currentUser);
     } else if (currentUser?.emailVerified) {
@@ -76,10 +89,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const resetPassword = async (email: string): Promise<void> => {
+    if (!auth) {
+      throw new Error('Firebase is not configured. Please add VITE_FIREBASE_* secrets in GitHub Settings.');
+    }
     await sendPasswordResetEmail(auth, email);
   };
 
   useEffect(() => {
+    if (!auth) {
+      // Firebase not configured - skip auth state listener
+      setLoading(false);
+      return;
+    }
+
     try {
       const unsubscribe = onAuthStateChanged(
         auth,
