@@ -114,6 +114,7 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -212,6 +213,7 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
         });
         if (isMounted) {
           setIsLoading(false);
+          setLoadError('Failed to load Monaco Editor. Using fallback editor.');
         }
       });
 
@@ -245,20 +247,17 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
     }
   }, [value, isLoading]);
 
-  const [loadError, setLoadError] = useState<string | null>(null);
-
-  // Update error state when loading fails
+  // Check for loading timeout
   useEffect(() => {
-    if (!isLoading && !editorInstanceRef.current) {
-      // If loading finished but no editor, there might be an error
-      const checkError = setTimeout(() => {
-        if (!editorInstanceRef.current && !isLoading) {
-          setLoadError('Failed to load Monaco Editor. Using fallback editor.');
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        if (isLoading && !editorInstanceRef.current) {
+          console.warn('Monaco Editor loading timeout - switching to fallback');
+          setLoadError('Monaco Editor is taking too long to load. Using fallback editor.');
+          setIsLoading(false);
         }
-      }, 2000);
-      return () => clearTimeout(checkError);
-    } else {
-      setLoadError(null);
+      }, 10000); // 10 second timeout
+      return () => clearTimeout(timeout);
     }
   }, [isLoading]);
 
