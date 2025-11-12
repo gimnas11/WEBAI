@@ -12,6 +12,13 @@ import { storage } from './utils/localStorage';
 import { Provider } from './utils/api';
 
 function App() {
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [provider, setProvider] = useState<Provider>(storage.getProvider());
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showFileManager, setShowFileManager] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { toasts, removeToast, success, error: showErrorToast } = useToast();
+
   // Debug: Verify File Manager button exists after render
   useEffect(() => {
     const checkButton = () => {
@@ -27,12 +34,6 @@ function App() {
     checkButton();
     setTimeout(checkButton, 100);
   }, []);
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [provider, setProvider] = useState<Provider>(storage.getProvider());
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [showFileManager, setShowFileManager] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { toasts, removeToast, success, error: showErrorToast } = useToast();
 
   const {
     chats,
@@ -171,9 +172,9 @@ function App() {
               }}
               className="px-3 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg border-2 border-blue-400 transition-all flex items-center gap-2 text-white font-semibold shadow-lg flex-shrink-0"
               style={{ 
-                display: 'flex !important',
-                visibility: 'visible !important',
-                opacity: '1 !important',
+                display: 'flex',
+                visibility: 'visible',
+                opacity: 1,
                 position: 'relative',
                 zIndex: 1000,
                 minWidth: '100px'

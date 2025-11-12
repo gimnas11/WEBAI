@@ -1,8 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-// @ts-ignore
-import monacoEditorPlugin from 'vite-plugin-monaco-editor'
 
 // https://vitejs.dev/config/
 // Base path: /WEBAI/ for GitHub Pages, / for Vercel
@@ -41,6 +39,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB (Monaco Editor is ~3.7 MB)
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.(openai|groq)\.com\/.*/i,
