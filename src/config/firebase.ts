@@ -15,10 +15,15 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
 };
 
-// Validate that all required environment variables are set
-const isFirebaseConfigured = firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId;
+// Function to check if Firebase is configured
+export const isFirebaseConfigured = () => {
+  return !!(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId);
+};
 
-if (!isFirebaseConfigured) {
+// Validate that all required environment variables are set
+const isConfigured = isFirebaseConfigured();
+
+if (!isConfigured) {
   console.warn('⚠️ Firebase configuration is missing. Authentication features will be disabled.');
   console.warn('📝 To enable Firebase: Add VITE_FIREBASE_* secrets in GitHub Settings → Secrets and variables → Actions');
 }
@@ -27,7 +32,7 @@ if (!isFirebaseConfigured) {
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 
-if (isFirebaseConfigured) {
+if (isConfigured) {
   try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -44,9 +49,4 @@ if (isFirebaseConfigured) {
 
 export { auth };
 export default app;
-
-// Export function to check if Firebase is configured
-export const isFirebaseConfigured = () => {
-  return !!(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId);
-};
 
