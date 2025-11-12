@@ -10,12 +10,43 @@ interface CodeEditorProps {
 let monacoEditor: any = null;
 let monacoLoader: Promise<any> | null = null;
 
+const loadMonacoFromCDN = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    // Check if already loaded
+    const win = window as any;
+    if (win.monaco && win.monaco.editor) {
+      console.log('✅ Monaco already loaded from CDN');
+      resolve(win.monaco);
+      return;
+    }
+
+    // Load Monaco Editor from CDN
+    console.log('🔄 Loading Monaco Editor from CDN...');
+    
+    const loaderScript = document.createElement('script');
+    loaderScript.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs/loader.js';
+    loaderScript.onload = () => {
+      const require = (window as any).require;
+      require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs' } });
+      require(['vs/editor/editor.main'], () => {
+        console.log('✅ Monaco Editor loaded from CDN');
+        resolve((window as any).monaco);
+      });
+    };
+    loaderScript.onerror = () => {
+      reject(new Error('Failed to load Monaco Editor from CDN'));
+    };
+    document.head.appendChild(loaderScript);
+  });
+};
+
 const loadMonaco = async (): Promise<any> => {
   if (monacoEditor) return monacoEditor;
   if (monacoLoader) return monacoLoader;
   
-  console.log('🔄 Loading Monaco Editor (this may take 30-60 seconds on slow connections)...');
+  console.log('🔄 Loading Monaco Editor...');
   
+  // Try dynamic import first, fallback to CDN
   monacoLoader = Promise.race([
     import('monaco-editor').then((module) => {
       console.log('📦 Monaco Editor module loaded:', Object.keys(module));
@@ -64,12 +95,16 @@ const loadMonaco = async (): Promise<any> => {
       }
       
       // Log all available keys for debugging
-      console.error('❌ Monaco Editor API not found. Available keys:', Object.keys(module));
-      console.error('Module structure:', module);
-      throw new Error('Monaco Editor API not found. Available keys: ' + Object.keys(module).join(', '));
+      console.warn('⚠️ Monaco Editor API not found in module, trying CDN...');
+      console.log('Available keys:', Object.keys(module));
+      // Fallback to CDN
+      throw new Error('Module load failed, will try CDN');
+    }).catch((error) => {
+      console.warn('⚠️ Dynamic import failed, trying CDN fallback:', error.message);
+      return loadMonacoFromCDN();
     }),
     new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Monaco Editor load timeout after 60s')), 60000)
+      setTimeout(() => reject(new Error('Monaco Editor load timeout after 30s')), 30000)
     )
   ]).then((monaco: any) => {
     if (monaco && monaco.editor && typeof monaco.editor.create === 'function') {
@@ -80,8 +115,18 @@ const loadMonaco = async (): Promise<any> => {
     throw new Error('Monaco Editor not properly loaded - editor.create is not a function');
   }).catch((error) => {
     console.error('❌ Monaco Editor load error:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
+    // Try CDN as last resort
+    if (error.message.includes('timeout') || error.message.includes('not found')) {
+      console.log('🔄 Attempting CDN fallback...');
+      return loadMonacoFromCDN().then((monaco) => {
+        if (monaco && monaco.editor && typeof monaco.editor.create === 'function') {
+          monacoEditor = monaco;
+          console.log('✅ Monaco Editor loaded from CDN successfully');
+          return monaco;
+        }
+        throw new Error('CDN load also failed');
+      });
+    }
     monacoLoader = null; // Reset loader on error
     throw error;
   });
