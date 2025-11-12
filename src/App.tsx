@@ -15,7 +15,7 @@ function App() {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [provider, setProvider] = useState<Provider>(storage.getProvider());
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [showFileManager, setShowFileManager] = useState(false);
+  const [currentView, setCurrentView] = useState<'chat' | 'files'>('chat');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { toasts, removeToast, success, error: showErrorToast } = useToast();
 
@@ -113,28 +113,30 @@ function App() {
         </svg>
       </button>
 
-      {/* Sidebar */}
-      <Sidebar
-        chats={chats}
-        currentChatId={currentChat?.id || null}
-        onSelectChat={(id) => {
-          selectChat(id);
-          setSidebarOpen(false);
-        }}
-        onNewChat={() => {
-          createNewChat();
-          setSidebarOpen(false);
-        }}
-        onDeleteChat={deleteChat}
-        onRenameChat={renameChat}
-        onDeleteAllChats={() => {
-          if (confirm('Are you sure you want to delete all chats? This cannot be undone.')) {
-            deleteAllChats();
-          }
-        }}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {/* Sidebar - Only show in chat view */}
+      {currentView === 'chat' && (
+        <Sidebar
+          chats={chats}
+          currentChatId={currentChat?.id || null}
+          onSelectChat={(id) => {
+            selectChat(id);
+            setSidebarOpen(false);
+          }}
+          onNewChat={() => {
+            createNewChat();
+            setSidebarOpen(false);
+          }}
+          onDeleteChat={deleteChat}
+          onRenameChat={renameChat}
+          onDeleteAllChats={() => {
+            if (confirm('Are you sure you want to delete all chats? This cannot be undone.')) {
+              deleteAllChats();
+            }
+          }}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -153,7 +155,7 @@ function App() {
             <h1 className="text-base sm:text-lg font-semibold">G Chat</h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
-            {error && (
+            {error && currentView === 'chat' && (
               <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-xs sm:text-sm flex-shrink">
                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -161,45 +163,70 @@ function App() {
                 <span className="flex-1 truncate">{error}</span>
               </div>
             )}
-            {/* File Manager Button - ALWAYS VISIBLE - NO CONDITIONAL */}
+            {/* Navigation Buttons */}
+            <button
+              onClick={() => setCurrentView('chat')}
+              className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
+                currentView === 'chat'
+                  ? 'bg-blue-600 border-blue-400 text-white'
+                  : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
+              }`}
+              title="Chat"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Chat</span>
+            </button>
             <button
               id="file-manager-button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('✅ File Manager button clicked!');
-                setShowFileManager(true);
+                setCurrentView('files');
               }}
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg border-2 border-blue-400 transition-all flex items-center gap-2 text-white font-semibold shadow-lg flex-shrink-0"
-              style={{ 
-                display: 'flex',
-                visibility: 'visible',
-                opacity: 1,
-                position: 'relative',
-                zIndex: 1000,
-                minWidth: '100px'
-              }}
+              className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
+                currentView === 'files'
+                  ? 'bg-blue-600 border-blue-400 text-white'
+                  : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
+              }`}
               title="File Manager - Upload ZIP and edit code"
               aria-label="Open File Manager"
             >
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
-              <span className="text-sm font-bold whitespace-nowrap">Files</span>
+              <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Files</span>
             </button>
             {/* User Menu */}
             <UserMenu />
           </div>
         </header>
 
-        {/* Chat Window */}
-        <ChatWindow
-          chat={currentChat}
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-          disabled={!apiKey && !import.meta.env.VITE_PROXY_URL}
-          onCopyCode={handleCopyCode}
-        />
+        {/* Content based on current view */}
+        {currentView === 'chat' ? (
+          <ChatWindow
+            chat={currentChat}
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            disabled={!apiKey && !import.meta.env.VITE_PROXY_URL}
+            onCopyCode={handleCopyCode}
+          />
+        ) : (
+          <FileManager
+            onClose={() => setCurrentView('chat')}
+            onAskAI={(question, context) => {
+              setCurrentView('chat');
+              // Create new chat with AI question including context
+              createNewChat();
+              const fullQuestion = context ? `${question}\n\nContext:\n${context}` : question;
+              setTimeout(() => {
+                sendMessage(fullQuestion, apiKey, provider);
+              }, 100);
+            }}
+          />
+        )}
       </div>
 
       {/* API Key Modal */}
@@ -216,21 +243,6 @@ function App() {
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
 
-      {/* File Manager */}
-      {showFileManager && (
-        <FileManager
-          onClose={() => setShowFileManager(false)}
-          onAskAI={(question, context) => {
-            setShowFileManager(false);
-            // Create new chat with AI question including context
-            createNewChat();
-            const fullQuestion = context ? `${question}\n\nContext:\n${context}` : question;
-            setTimeout(() => {
-              sendMessage(fullQuestion, apiKey, provider);
-            }, 100);
-          }}
-        />
-      )}
     </div>
   );
 }
