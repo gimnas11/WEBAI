@@ -11,7 +11,7 @@ Add your domain (gimnas11.github.io) to the OAuth redirect domains list
 ### Langkah 1: Tambahkan Domain ke Authorized Domains
 
 1. Buka [Firebase Console](https://console.firebase.google.com/)
-2. Pilih project: **g-chat-app-3726a**
+2. Pilih project Firebase Anda
 3. Klik **Authentication** di sidebar
 4. Klik tab **Settings**
 5. Scroll ke bagian **Authorized domains**
