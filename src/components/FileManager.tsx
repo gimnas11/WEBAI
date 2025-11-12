@@ -90,6 +90,23 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
     }
   }, [expandedFolders, currentUser?.uid]);
 
+  const clearFiles = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const userId = getUserId();
+      await fileStorage.deleteFiles(userId);
+      fileStorage.saveExpandedFolders(userId, new Set());
+      setFiles([]);
+      setSelectedFile(null);
+      setExpandedFolders(new Set());
+      success('Files cleared successfully');
+    } catch (error) {
+      console.error('Error clearing files:', error);
+      showError('Failed to clear files');
+    }
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -97,6 +114,11 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
     if (!file.name.endsWith('.zip')) {
       showError('Please upload a ZIP file');
       return;
+    }
+
+    // Clear existing files before uploading new one
+    if (files.length > 0) {
+      await clearFiles();
     }
 
     setIsLoading(true);
@@ -285,6 +307,18 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {files.length > 0 && (
+            <button
+              onClick={clearFiles}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              title="Clear all files"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span className="hidden sm:inline">Clear</span>
+            </button>
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -296,6 +330,7 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+            title={files.length > 0 ? "Upload new ZIP (will replace current files)" : "Upload ZIP file"}
           >
             {isLoading ? (
               <>
@@ -310,7 +345,7 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                Upload ZIP
+                {files.length > 0 ? 'Replace ZIP' : 'Upload ZIP'}
               </>
             )}
           </button>
@@ -333,7 +368,7 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
                 </svg>
                 <p className="text-sm">Upload a ZIP file to get started</p>
                 {currentUser && (
-                  <p className="text-xs text-gray-500 mt-2">Files are saved automatically</p>
+                  <p className="text-xs text-gray-500 mt-2">Only one ZIP file at a time. Files are saved automatically.</p>
                 )}
               </div>
             ) : (
