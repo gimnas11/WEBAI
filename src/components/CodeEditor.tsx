@@ -83,7 +83,7 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
 
     // Set timeout to show error if loading takes too long
     timeoutId = setTimeout(() => {
-      if (isMounted && isLoading) {
+      if (isMounted) {
         console.error('Monaco Editor loading timeout - check network or bundle size');
         setIsLoading(false);
       }
@@ -185,7 +185,7 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
         }
       }
     };
-  }, [language, isLoading]);
+  }, [language]);
 
   // Update editor value when prop changes (only if different)
   useEffect(() => {
