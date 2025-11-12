@@ -1,38 +1,31 @@
-# G Chat - AI Programming Assistant
+# GAI Chat - AI Programming Assistant
 
-Aplikasi web modern berbasis AI untuk membantu tugas-tugas programming, dibangun dengan React, Vite, dan TailwindCSS. Aplikasi ini menyediakan asisten AI yang cerdas dengan dukungan OpenAI GPT-4o atau Groq Llama models.
+A modern, ChatGPT-like web application built with React, Vite, and TailwindCSS. This application provides an intelligent AI programming assistant powered by OpenAI's GPT-4o or Groq's Llama models, with features like streaming responses, code syntax highlighting, chat history management, and more.
 
-## ✨ Fitur Utama
+## ✨ Features
 
-- 🤖 **Asisten AI Canggih**: Didukung oleh OpenAI GPT-4o atau Groq Llama models
-- 💬 **Interface Chat**: UI yang indah dan responsif seperti ChatGPT
-- 📝 **Riwayat Chat**: Buat, rename, hapus, dan kelola banyak percakapan
-- ⚡ **Streaming Responses**: Respon AI real-time untuk alur percakapan yang natural
-- 💻 **Code Highlighting**: Syntax highlighting otomatis untuk code blocks
-- 📱 **Responsive Design**: Bekerja sempurna di desktop dan mobile
-- 🌙 **Dark Mode**: Tema gelap modern yang nyaman untuk penggunaan lama
-- 💾 **Local Storage**: Semua chat dan pengaturan disimpan lokal di browser
-- 🔒 **Secure**: API key disimpan lokal, tidak pernah diekspos
-- 📲 **PWA Support**: Dapat diinstall sebagai Progressive Web App
+- 🤖 **Advanced AI Assistant**: Powered by OpenAI GPT-4o or Groq Llama models with intelligent system prompts for programming tasks
+- 💬 **Chat Interface**: Beautiful, responsive UI similar to ChatGPT
+- 📝 **Chat History**: Create, rename, delete, and manage multiple chat conversations
+- ⚡ **Streaming Responses**: Real-time streaming of AI responses for natural conversation flow
+- 💻 **Code Highlighting**: Automatic syntax highlighting for code blocks with copy functionality
+- 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
+- 🌙 **Dark Mode**: Modern dark theme optimized for extended use
+- 💾 **Local Storage**: All chats and settings stored locally in your browser
+- 🔒 **Secure API Key**: API key stored locally, never exposed in source code
+- 🚀 **Proxy Mode**: Optional backend proxy for public use without requiring API keys
 
-## 📦 Build untuk Production
+## 📄 License
 
-```bash
-npm run build
-```
+This project is open source and available for personal and commercial use.
 
-File hasil build akan ada di folder `dist`, siap untuk di-deploy.
+## 🙏 Acknowledgments
 
-## 🛠️ Teknologi yang Digunakan
-
-- [React](https://react.dev/) - UI Framework
-- [Vite](https://vitejs.dev/) - Build Tool
-- [TailwindCSS](https://tailwindcss.com/) - Styling
-
-## 📝 Catatan
-
-Aplikasi ini memerlukan API key (dari user atau via backend proxy) dengan kredit yang cukup. Anda bertanggung jawab atas biaya penggunaan API.
+- Built with [React](https://react.dev/)
+- Styled with [TailwindCSS](https://tailwindcss.com/)
+- Bundled with [Vite](https://vitejs.dev/)
+- Owner Gimnas Irwandi [Instagram](https://instagram.com/_gmns)
 
 ---
 
-**Dibuat oleh [Gimnas Irwandi](https://instagram.com/_gmns)**
+**Note**: This application requires an API key (either user-provided or via backend proxy) with sufficient credits. You are responsible for any API usage costs.
