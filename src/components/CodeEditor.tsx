@@ -19,25 +19,56 @@ const loadMonaco = async (): Promise<any> => {
   monacoLoader = Promise.race([
     import('monaco-editor').then((module) => {
       console.log('Monaco Editor module loaded:', Object.keys(module));
-      // Handle both default export and named exports
-      const monaco = module.default || module;
-      if (monaco && (monaco.editor || module.editor)) {
-        return monaco.editor ? monaco : { editor: module.editor || monaco };
+      
+      // Try different ways to access Monaco Editor
+      let monaco: any = null;
+      
+      // Method 1: Direct access
+      if (module.editor) {
+        monaco = { editor: module.editor };
       }
-      throw new Error('Monaco Editor API not found in module');
+      // Method 2: Default export
+      else if (module.default) {
+        const defaultExport = module.default;
+        if (defaultExport.editor) {
+          monaco = defaultExport;
+        } else if (typeof defaultExport === 'object' && 'editor' in defaultExport) {
+          monaco = defaultExport;
+        }
+      }
+      // Method 3: Named exports
+      else if ((module as any).monaco) {
+        monaco = (module as any).monaco;
+      }
+      // Method 4: Try accessing directly
+      else {
+        // Monaco might be on window object if loaded via script tag
+        const win = window as any;
+        if (win.monaco && win.monaco.editor) {
+          monaco = win.monaco;
+        }
+      }
+      
+      if (monaco && monaco.editor && typeof monaco.editor.create === 'function') {
+        console.log('Monaco Editor API found');
+        return monaco;
+      }
+      
+      throw new Error('Monaco Editor API not found in module. Available keys: ' + Object.keys(module).join(', '));
     }),
     new Promise((_, reject) => 
       setTimeout(() => reject(new Error('Monaco Editor load timeout after 30s')), 30000)
     )
   ]).then((monaco: any) => {
-    if (monaco && monaco.editor && monaco.editor.create) {
+    if (monaco && monaco.editor && typeof monaco.editor.create === 'function') {
       monacoEditor = monaco;
-      console.log('Monaco Editor ready');
+      console.log('✅ Monaco Editor ready');
       return monaco;
     }
-    throw new Error('Monaco Editor not properly loaded - editor.create not found');
+    throw new Error('Monaco Editor not properly loaded - editor.create is not a function');
   }).catch((error) => {
-    console.error('Monaco Editor load error:', error);
+    console.error('❌ Monaco Editor load error:', error);
+    console.error('Error stack:', error.stack);
     monacoLoader = null; // Reset loader on error
     throw error;
   });
@@ -214,7 +245,24 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
     }
   }, [value, isLoading]);
 
-  if (isLoading) {
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Update error state when loading fails
+  useEffect(() => {
+    if (!isLoading && !editorInstanceRef.current) {
+      // If loading finished but no editor, there might be an error
+      const checkError = setTimeout(() => {
+        if (!editorInstanceRef.current && !isLoading) {
+          setLoadError('Failed to load Monaco Editor. Using fallback editor.');
+        }
+      }, 2000);
+      return () => clearTimeout(checkError);
+    } else {
+      setLoadError(null);
+    }
+  }, [isLoading]);
+
+  if (isLoading && !loadError) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-chat-darker">
         <div className="text-center text-gray-400">
@@ -222,6 +270,26 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
           <p className="text-sm">Loading editor...</p>
           <p className="text-xs text-gray-500 mt-2">This may take a moment on first load</p>
         </div>
+      </div>
+    );
+  }
+
+  // Fallback to textarea if Monaco fails to load
+  if (loadError || (!isLoading && !editorInstanceRef.current)) {
+    return (
+      <div className="w-full h-full flex flex-col bg-chat-darker">
+        {loadError && (
+          <div className="p-2 bg-yellow-900/20 border-b border-yellow-800 text-yellow-400 text-xs">
+            {loadError} Check browser console for details.
+          </div>
+        )}
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 w-full p-4 bg-chat-darker text-white font-mono text-sm resize-none focus:outline-none"
+          style={{ minHeight: '400px' }}
+          spellCheck={false}
+        />
       </div>
     );
   }
