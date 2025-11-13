@@ -353,41 +353,116 @@ export function PWAInstallPrompt() {
   const buttonText = getButtonText();
 
   return (
-    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4">
-      <div className="bg-chat-darker border border-chat-border rounded-lg shadow-lg p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex-shrink-0">
-            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 0 002-2V5a2 0 00-2-2H8a2 0 00-2 2v14a2 0 002 2z" />
-            </svg>
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 md:bottom-4 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 md:max-w-md md:w-full md:mx-4 animate-slide-up">
+      <div className="bg-gradient-to-br from-chat-darker via-chat-darker to-gray-800 border border-chat-border/50 rounded-2xl shadow-2xl backdrop-blur-sm overflow-hidden relative">
+        {/* Decorative gradient overlay */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+        
+        <div className="relative p-5 sm:p-6">
+          <div className="flex items-start gap-4 mb-4">
+            {/* Icon with gradient background */}
+            <div className="flex-shrink-0 relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl blur opacity-50"></div>
+              <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 p-3 rounded-xl shadow-lg">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 18h.01M8 21h8a2 0 002-2V5a2 0 00-2-2H8a2 0 00-2 2v14a2 0 002 2z" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 leading-tight">
+                Install G Chat
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                {(() => {
+                  const prompt = deferredPromptRef.current || deferredPrompt;
+                  return isInAppBrowser && !prompt 
+                    ? 'Buka di Chrome untuk install aplikasi' 
+                    : 'Install untuk akses lebih cepat dan pengalaman yang lebih baik';
+                })()}
+              </p>
+            </div>
+            
+            {/* Close button */}
+            <button
+              onClick={handleDismiss}
+              className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+              aria-label="Tutup"
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-white">Install G Chat</p>
-            <p className="text-xs text-gray-400">
-              {(() => {
-                const prompt = deferredPromptRef.current || deferredPrompt;
-                return isInAppBrowser && !prompt 
-                  ? 'Buka di Chrome untuk install aplikasi' 
-                  : 'Install untuk akses lebih cepat dan pengalaman yang lebih baik';
-              })()}
-            </p>
+          
+          {/* Benefits list */}
+          <div className="mb-4 space-y-2 hidden sm:block">
+            <div className="flex items-center gap-2 text-xs text-gray-400">
+              <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Akses lebih cepat tanpa browser</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-400">
+              <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Bekerja offline</span>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleDismiss}
-            className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors"
-          >
-            Nanti
-          </button>
-          <button
-            onClick={handleInstallClick}
-            className="flex-1 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
-          >
-            {buttonText}
-          </button>
+          
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
+            <button
+              onClick={handleDismiss}
+              className="px-4 py-2.5 sm:px-5 sm:py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-200 border border-transparent hover:border-white/10"
+            >
+              Nanti
+            </button>
+            <button
+              onClick={handleInstallClick}
+              className="flex-1 px-5 py-2.5 sm:py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>{buttonText}</span>
+            </button>
+          </div>
         </div>
       </div>
+      
+      <style>{`
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @media (min-width: 768px) {
+          @keyframes slide-up {
+            from {
+              opacity: 0;
+              transform: translate(-50%, 100%);
+            }
+            to {
+              opacity: 1;
+              transform: translate(-50%, 0);
+            }
+          }
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
     </div>
   );
 }
