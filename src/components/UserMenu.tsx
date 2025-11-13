@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../hooks/useToast';
 import { AuthForm } from './AuthForm';
 import { ForgotPassword } from './ForgotPassword';
 import { EmailVerification } from './EmailVerification';
