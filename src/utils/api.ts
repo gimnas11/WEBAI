@@ -488,7 +488,7 @@ export function isImageEditRequest(message: string, hasUploadedImage: boolean): 
   
   const normalized = message.toLowerCase().trim();
   
-  // Keywords for background removal
+  // Keywords for background removal - expanded
   const bgRemovalKeywords = [
     'remove background',
     'hapus background',
@@ -501,6 +501,20 @@ export function isImageEditRequest(message: string, hasUploadedImage: boolean): 
     'hilangkan bg',
     'transparent background',
     'background transparan',
+    'ganti backrounf', // typo support
+    'ganti backround', // typo support
+    'ubah backround',
+    'ubah backrounf',
+    'hilangkan backround',
+    'hilangkan backrounf',
+    'hapus backround',
+    'hapus backrounf',
+    'remove backround',
+    'remove backrounf',
+    'background',
+    'backround',
+    'backrounf',
+    'bg',
   ];
   
   // Check if message contains background removal keywords
@@ -531,7 +545,7 @@ export function isImageEditRequest(message: string, hasUploadedImage: boolean): 
 export function detectImageEditType(message: string): 'remove-bg' | 'face-swap' | 'other' {
   const normalized = message.toLowerCase().trim();
   
-  // Background removal
+  // Background removal - expanded keywords
   const bgRemovalKeywords = [
     'remove background',
     'hapus background',
@@ -544,6 +558,21 @@ export function detectImageEditType(message: string): 'remove-bg' | 'face-swap' 
     'hilangkan bg',
     'transparent background',
     'background transparan',
+    'ganti backrounf', // typo support
+    'ganti backround', // typo support
+    'ganti background',
+    'ubah backround',
+    'ubah backrounf',
+    'hilangkan backround',
+    'hilangkan backrounf',
+    'hapus backround',
+    'hapus backrounf',
+    'remove backround',
+    'remove backrounf',
+    'background',
+    'backround',
+    'backrounf',
+    'bg',
   ];
   
   if (bgRemovalKeywords.some(keyword => normalized.includes(keyword))) {
