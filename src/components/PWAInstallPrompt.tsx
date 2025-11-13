@@ -75,6 +75,13 @@ export function PWAInstallPrompt() {
       console.log('✅ beforeinstallprompt event triggered');
       setDeferredPrompt(promptEvent);
       deferredPromptRef.current = promptEvent;
+      
+      // If redirected from in-app browser, ensure we're not in in-app browser mode anymore
+      const urlParamsCheck = new URLSearchParams(window.location.search);
+      if (urlParamsCheck.get('fromInApp') === 'true') {
+        console.log('🔄 beforeinstallprompt triggered after redirect - button will show "Install Sekarang"');
+        setIsInAppBrowser(false);
+      }
     };
 
     // Listen for app installed event
@@ -92,15 +99,20 @@ export function PWAInstallPrompt() {
     const urlParams = new URLSearchParams(window.location.search);
     const fromInApp = urlParams.get('fromInApp') === 'true';
     
+    // If redirected from in-app browser, we're now in Chrome (not in-app browser anymore)
+    if (fromInApp) {
+      setIsInAppBrowser(false);
+    }
+    
     // Detect Chrome browser (not Edge, not Opera)
     const ua = navigator.userAgent.toLowerCase();
     const isChrome = ua.includes('chrome') && !ua.includes('edg') && !ua.includes('opr') && !ua.includes('opera');
     
     // Show prompt UI - ALWAYS show in Chrome (manual access or after redirect)
-    // Delay: 500ms if redirected from in-app, 500ms if in-app browser, 1000ms for Chrome, 2000ms for other browsers
+    // Delay: 1500ms if redirected from in-app (wait for beforeinstallprompt), 500ms if in-app browser, 1000ms for Chrome, 2000ms for other browsers
     let delay = 2000;
     if (fromInApp) {
-      delay = 500; // After redirect from in-app browser
+      delay = 1500; // After redirect from in-app browser - wait longer for beforeinstallprompt
     } else if (inApp) {
       delay = 500; // In in-app browser
     } else if (isChrome) {
@@ -109,46 +121,122 @@ export function PWAInstallPrompt() {
     
     console.log(`🔍 Browser detection: fromInApp=${fromInApp}, inApp=${inApp}, isChrome=${isChrome}, delay=${delay}ms`);
     
-    const timer = setTimeout(() => {
-      // Double check if app is installed before showing prompt
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      const isIOSStandalone = (window.navigator as any).standalone === true;
-      const isInstalledCheck = isIOSStandalone || isStandalone;
+    // If redirected from in-app browser, wait for beforeinstallprompt before showing prompt UI
+    let checkPromptInterval: NodeJS.Timeout | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (fromInApp) {
+      checkPromptInterval = setInterval(() => {
+        if (deferredPromptRef.current) {
+          if (checkPromptInterval) clearInterval(checkPromptInterval);
+          // beforeinstallprompt has fired, now show prompt UI
+          setTimeout(() => {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            const isIOSStandalone = (window.navigator as any).standalone === true;
+            const isInstalledCheck = isIOSStandalone || isStandalone;
+            
+            if (!isInstalledCheck) {
+              console.log('✅ Showing PWA install prompt after redirect (beforeinstallprompt ready)');
+              setShowPrompt(true);
+            }
+          }, 200);
+        }
+      }, 100);
       
-      if (isInstalledCheck) {
-        console.log('✅ PWA already installed, not showing prompt');
-        setIsInstalled(true);
-        setShowPrompt(false);
-        return;
-      }
-      
-      // In Chrome, always show prompt (unless already installed)
-      if (isChrome) {
-        console.log('✅ Showing PWA install prompt in Chrome');
-        setShowPrompt(true);
-      } else {
-        // For other browsers, check dismissed status
-        const dismissed = localStorage.getItem('pwa-install-dismissed');
-        if (!dismissed) {
-          console.log('✅ Showing PWA install prompt (not dismissed)');
+      // Stop checking after 3 seconds
+      timeoutId = setTimeout(() => {
+        if (checkPromptInterval) clearInterval(checkPromptInterval);
+        // Show prompt anyway even if beforeinstallprompt hasn't fired yet
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        const isIOSStandalone = (window.navigator as any).standalone === true;
+        const isInstalledCheck = isIOSStandalone || isStandalone;
+        
+        if (!isInstalledCheck) {
+          console.log('✅ Showing PWA install prompt after redirect (timeout)');
           setShowPrompt(true);
-        } else {
-          const dismissedTime = parseInt(dismissed, 10);
-          const sevenDays = 7 * 24 * 60 * 60 * 1000;
-          if (Date.now() - dismissedTime >= sevenDays) {
-            console.log('✅ Showing PWA install prompt (7 days passed)');
+        }
+      }, 3000);
+    } else {
+      // Normal flow for non-redirect cases
+      let timer: NodeJS.Timeout | null = null;
+      
+      // In Chrome, wait for beforeinstallprompt before showing prompt UI
+      if (isChrome) {
+        const chromeCheckInterval = setInterval(() => {
+          if (deferredPromptRef.current) {
+            clearInterval(chromeCheckInterval);
+            // beforeinstallprompt has fired, now show prompt UI
+            setTimeout(() => {
+              const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+              const isIOSStandalone = (window.navigator as any).standalone === true;
+              const isInstalledCheck = isIOSStandalone || isStandalone;
+              
+              if (!isInstalledCheck) {
+                console.log('✅ Showing PWA install prompt in Chrome (beforeinstallprompt ready)');
+                setShowPrompt(true);
+              }
+            }, 200);
+          }
+        }, 100);
+        
+        // Stop checking after 2 seconds, show prompt anyway
+        timer = setTimeout(() => {
+          clearInterval(chromeCheckInterval);
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+          const isIOSStandalone = (window.navigator as any).standalone === true;
+          const isInstalledCheck = isIOSStandalone || isStandalone;
+          
+          if (!isInstalledCheck) {
+            console.log('✅ Showing PWA install prompt in Chrome (timeout)');
+            setShowPrompt(true);
+          }
+        }, 2000);
+      } else {
+        // For other browsers, use normal delay
+        timer = setTimeout(() => {
+          // Double check if app is installed before showing prompt
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+          const isIOSStandalone = (window.navigator as any).standalone === true;
+          const isInstalledCheck = isIOSStandalone || isStandalone;
+          
+          if (isInstalledCheck) {
+            console.log('✅ PWA already installed, not showing prompt');
+            setIsInstalled(true);
+            setShowPrompt(false);
+            return;
+          }
+          
+          // For other browsers, check dismissed status
+          const dismissed = localStorage.getItem('pwa-install-dismissed');
+          if (!dismissed) {
+            console.log('✅ Showing PWA install prompt (not dismissed)');
             setShowPrompt(true);
           } else {
-            console.log('⏸️ PWA install prompt dismissed, waiting for 7 days');
+            const dismissedTime = parseInt(dismissed, 10);
+            const sevenDays = 7 * 24 * 60 * 60 * 1000;
+            if (Date.now() - dismissedTime >= sevenDays) {
+              console.log('✅ Showing PWA install prompt (7 days passed)');
+              setShowPrompt(true);
+            } else {
+              console.log('⏸️ PWA install prompt dismissed, waiting for 7 days');
+            }
           }
-        }
+        }, delay);
       }
-    }, delay);
+      
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.removeEventListener('appinstalled', handleAppInstalled);
+        if (timer) clearTimeout(timer);
+      };
+    }
 
+    // Cleanup for fromInApp case
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
-      clearTimeout(timer);
+      if (checkPromptInterval) clearInterval(checkPromptInterval);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 
