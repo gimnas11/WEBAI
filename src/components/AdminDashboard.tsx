@@ -172,7 +172,7 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
 
   if (!user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-chat-darker">
+      <div className="h-full w-full flex items-center justify-center bg-chat-darker">
         <div className="text-center">
           <p className="text-gray-400 text-lg mb-4">Akses ditolak</p>
           <p className="text-gray-500 text-sm">Hanya admin yang dapat mengakses halaman ini</p>
@@ -182,7 +182,7 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-chat-darker text-white">
+    <div className="h-full w-full bg-chat-darker text-white overflow-y-auto">
       {/* Header */}
       <header className="bg-chat-dark border-b border-chat-border px-4 py-3">
         <div className="flex items-center justify-between">

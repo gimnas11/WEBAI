@@ -658,7 +658,7 @@ export function FileManager({ user, onLogout }: FileManagerProps) {
   }, [user, navigate]);
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 relative">
+    <div className="flex h-full w-full bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
       {/* Sidebar Overlay for Mobile */}
       {sidebarOpen && (
         <div 

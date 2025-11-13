@@ -42,14 +42,15 @@ function AppContent({ user, setUser, loading, onLogin, onLogout, justLoggedIn, s
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-gray-600 dark:text-gray-400">Loading...</div>
       </div>
     );
   }
 
   return (
-    <Routes>
+    <div className="h-full w-full">
+      <Routes>
       <Route path="/" element={<Chat user={user} onLogout={onLogout} onLogin={onLogin} />} />
       <Route 
         path="/files" 
@@ -72,7 +73,8 @@ function AppContent({ user, setUser, loading, onLogin, onLogout, justLoggedIn, s
         } 
       />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </div>
   );
 }
 

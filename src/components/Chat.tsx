@@ -161,7 +161,7 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 relative">
+    <div className="flex h-full w-full bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
       {/* Sidebar Overlay for Mobile */}
       {sidebarOpen && (
         <div 
@@ -310,9 +310,9 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col w-full md:w-auto">
+      <div className="flex-1 flex flex-col w-full md:w-auto min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2.5 md:py-3 flex items-center justify-between">
+        <header className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2.5 md:py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -375,7 +375,7 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
         </header>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6 space-y-2 sm:space-y-3 md:space-y-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6 space-y-2 sm:space-y-3 md:space-y-4 min-h-0">
           {!currentChat || currentChat.messages.length === 0 ? (
             <div className="flex items-center justify-center h-full px-4">
               <div className="text-center">
@@ -430,15 +430,17 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
         </div>
 
         {/* Input */}
-        <InputBox 
-          onSend={handleSend} 
-          isLoading={isLoading} 
-          disabled={!apiKey && !proxyUrl}
-          onToast={(toastData) => {
-            setToast({ type: toastData.type, message: toastData.message });
-            setTimeout(() => setToast(null), 4000);
-          }}
-        />
+        <div className="flex-shrink-0">
+          <InputBox 
+            onSend={handleSend} 
+            isLoading={isLoading} 
+            disabled={!apiKey && !proxyUrl}
+            onToast={(toastData) => {
+              setToast({ type: toastData.type, message: toastData.message });
+              setTimeout(() => setToast(null), 4000);
+            }}
+          />
+        </div>
       </div>
 
       {/* Login Modal */}
