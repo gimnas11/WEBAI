@@ -77,7 +77,8 @@ export default {
           );
         }
         
-        const { image } = body;
+        // Support both 'image' and 'inputs' field names
+        const image = body.image || body.inputs;
         
         if (!image) {
           console.error('[Worker] Image missing in request body. Body keys:', Object.keys(body || {}));
