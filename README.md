@@ -29,3 +29,4 @@ This project is open source and available for personal and commercial use.
 ---
 
 **Note**: This application requires an API key (either user-provided or via backend proxy) with sufficient credits. You are responsible for any API usage costs.
+
