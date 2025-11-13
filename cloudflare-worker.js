@@ -94,11 +94,21 @@ export default {
         
         // Call Hugging Face API - using new router endpoint
         // Format: https://router.huggingface.co/hf-inference/models/{model_id}
+        // Note: New endpoint requires authentication token
+        const hfToken = env.HUGGINGFACE_API_TOKEN || env.HF_TOKEN;
+        
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add Authorization header if token is available
+        if (hfToken) {
+          headers['Authorization'] = `Bearer ${hfToken}`;
+        }
+        
         const hfResponse = await fetch('https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: headers,
           body: JSON.stringify({
             inputs: prompt,
           }),
@@ -122,7 +132,13 @@ export default {
             );
           }
           
-          const errorText = await hfResponse.text();
+          let errorText = await hfResponse.text();
+          
+          // Provide helpful error message for 401
+          if (hfResponse.status === 401) {
+            errorText = 'Hugging Face API memerlukan token autentikasi. Silakan tambahkan HUGGINGFACE_API_TOKEN atau HF_TOKEN sebagai secret di Cloudflare Worker. Dapatkan token gratis di: https://huggingface.co/settings/tokens';
+          }
+          
           return new Response(
             JSON.stringify({ error: `Hugging Face API error: ${hfResponse.status} ${hfResponse.statusText}. ${errorText}` }),
             {
