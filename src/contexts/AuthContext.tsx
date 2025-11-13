@@ -10,10 +10,15 @@ import {
   updateProfile,
   UserCredential
 } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
+
+export interface UserWithRole extends User {
+  role?: 'admin' | 'user';
+}
 
 interface AuthContextType {
-  currentUser: User | null;
+  currentUser: UserWithRole | null;
   loading: boolean;
   signup: (email: string, password: string, displayName?: string) => Promise<UserCredential>;
   login: (email: string, password: string) => Promise<UserCredential>;
@@ -38,9 +43,35 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserWithRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFirebaseAvailable] = useState(!!auth);
+
+  // Fetch user role from Firestore
+  const fetchUserRole = async (user: User): Promise<'admin' | 'user'> => {
+    if (!db) return 'user';
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return userData.role || 'user';
+      } else {
+        // Create user document with default role 'user' (untuk user yang sudah ada di Firebase Auth tapi belum ada di Firestore)
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          displayName: user.displayName || '',
+          role: 'user', // Default role 'user' untuk semua user
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        return 'user';
+      }
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      return 'user';
+    }
+  };
 
   const signup = async (email: string, password: string, displayName?: string): Promise<UserCredential> => {
     if (!auth) {
@@ -51,6 +82,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Update display name if provided
     if (displayName && userCredential.user) {
       await updateProfile(userCredential.user, { displayName });
+    }
+    
+    // Create user document in Firestore with default role 'user'
+    // Semua user baru otomatis mendapat role 'user' (bukan admin)
+    if (userCredential.user && db) {
+      try {
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          email: userCredential.user.email,
+          displayName: displayName || userCredential.user.displayName || '',
+          role: 'user', // Default role untuk semua user baru
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } catch (error) {
+        console.error('Error creating user document:', error);
+      }
     }
     
     // Send verification email
@@ -105,8 +152,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const unsubscribe = onAuthStateChanged(
         auth,
-        (user) => {
-          setCurrentUser(user);
+        async (user) => {
+          if (user) {
+            // Fetch user role from Firestore
+            const role = await fetchUserRole(user);
+            const userWithRole: UserWithRole = { ...user, role };
+            setCurrentUser(userWithRole);
+          } else {
+            setCurrentUser(null);
+          }
           setLoading(false);
         },
         (error) => {

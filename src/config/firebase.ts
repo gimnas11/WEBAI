@@ -1,5 +1,6 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
 // Firebase configuration
 // Config dari Firebase Console: https://console.firebase.google.com/ → Project Settings → Your apps
@@ -31,22 +32,25 @@ if (!isConfigured) {
 // Initialize Firebase only if configured
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
+let db: Firestore | null = null;
 
 if (isConfigured) {
   try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
+    db = getFirestore(app);
     console.log('✅ Firebase initialized successfully');
   } catch (error) {
     console.error('❌ Firebase initialization error:', error);
     // Don't throw - allow app to continue without Firebase
     app = null;
     auth = null;
+    db = null;
   }
 } else {
   console.warn('⚠️ Firebase not initialized - authentication disabled');
 }
 
-export { auth };
+export { auth, db };
 export default app;
 

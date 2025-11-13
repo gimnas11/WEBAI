@@ -6,7 +6,11 @@ import { EmailVerification } from './EmailVerification';
 
 type AuthModalView = 'login' | 'forgot-password' | null;
 
-export function UserMenu() {
+interface UserMenuProps {
+  onNavigateToAdmin?: () => void;
+}
+
+export function UserMenu({ onNavigateToAdmin }: UserMenuProps = {}) {
   const { currentUser, isEmailVerified, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [authModalView, setAuthModalView] = useState<AuthModalView>(null);
@@ -116,7 +120,26 @@ export function UserMenu() {
                 <div className="px-4 py-2 border-b border-chat-border">
                   <p className="text-sm font-medium text-white truncate">{currentUser.displayName || 'User'}</p>
                   <p className="text-xs text-gray-400 truncate">{currentUser.email}</p>
+                  {currentUser.role === 'admin' && (
+                    <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-600/20 text-purple-400 border border-purple-600/30">
+                      Admin
+                    </span>
+                  )}
                 </div>
+                {currentUser.role === 'admin' && onNavigateToAdmin && (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      onNavigateToAdmin();
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-chat-hover transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Admin Dashboard
+                  </button>
+                )}
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-chat-hover transition-colors flex items-center gap-2"

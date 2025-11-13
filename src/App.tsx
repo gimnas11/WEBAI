@@ -6,6 +6,7 @@ import { ToastContainer } from './components/ToastContainer';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { UserMenu } from './components/UserMenu';
 import { FileManager } from './components/FileManager';
+import { AdminDashboard } from './components/AdminDashboard';
 import { useChat } from './hooks/useChat';
 import { useToast } from './hooks/useToast';
 import { useAuth } from './contexts/AuthContext';
@@ -17,8 +18,9 @@ function App() {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [provider, setProvider] = useState<Provider>(storage.getProvider());
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [currentView, setCurrentView] = useState<'chat' | 'files'>('chat');
+  const [currentView, setCurrentView] = useState<'chat' | 'files' | 'admin'>('chat');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
   const { toasts, removeToast, success, error: showErrorToast } = useToast();
 
   // Debug: Verify File Manager button exists after render
@@ -71,6 +73,27 @@ function App() {
     }
   }, []);
 
+  // Redirect admin to dashboard after login
+  useEffect(() => {
+    if (currentUser && currentUser.role === 'admin' && justLoggedIn && currentView !== 'admin') {
+      setCurrentView('admin');
+      setJustLoggedIn(false);
+    }
+  }, [currentUser, justLoggedIn, currentView]);
+
+  // Track login state
+  useEffect(() => {
+    if (currentUser) {
+      // Check if this is a fresh login (not just page refresh)
+      const lastLoginTime = sessionStorage.getItem('lastLoginTime');
+      const now = Date.now();
+      if (!lastLoginTime || (now - parseInt(lastLoginTime)) > 5000) {
+        setJustLoggedIn(true);
+        sessionStorage.setItem('lastLoginTime', now.toString());
+      }
+    }
+  }, [currentUser]);
+
   // Show toast when error occurs
   useEffect(() => {
     if (error) {
@@ -100,6 +123,11 @@ function App() {
   const handleCopyCode = () => {
     success('Code copied to clipboard!');
   };
+
+  // Show admin dashboard if admin and viewing admin
+  if (currentView === 'admin' && currentUser?.role === 'admin') {
+    return <AdminDashboard />;
+  }
 
   // Main app - always visible, login via UserMenu
   return (
@@ -204,8 +232,26 @@ function App() {
                 <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Files</span>
               </button>
             )}
+            {/* Admin Dashboard Button - Only show if admin */}
+            {currentUser && currentUser.role === 'admin' && (
+              <button
+                onClick={() => setCurrentView('admin')}
+                className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
+                  currentView === 'admin'
+                    ? 'bg-purple-600 border-purple-400 text-white'
+                    : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
+                }`}
+                title="Admin Dashboard"
+                aria-label="Open Admin Dashboard"
+              >
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Admin</span>
+              </button>
+            )}
             {/* User Menu */}
-            <UserMenu />
+            <UserMenu onNavigateToAdmin={() => setCurrentView('admin')} />
           </div>
         </header>
 
