@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/WEBAI/Gambar/ChatGPT_Image_Nov_11__2025__07_22_25_AM-removebg-preview.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="AI Programming Assistant powered by GPT-4o and Groq Llama" />
+    <meta name="theme-color" content="#171717" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="G Chat" />
+    <link rel="apple-touch-icon" href="/WEBAI/Gambar/ChatGPT_Image_Nov_11__2025__07_22_25_AM-removebg-preview.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/WEBAI/manifest.webmanifest" />
+    
+    <!-- Open Graph / Facebook / Instagram -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="G Chat - AI Assistant" />
+    <meta property="og:description" content="AI Programming Assistant powered by GPT-4o and Groq Llama" />
+    <meta property="og:url" content="https://gimnas11.github.io/WEBAI/" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="G Chat - AI Assistant" />
+    <meta name="twitter:description" content="AI Programming Assistant powered by GPT-4o and Groq Llama" />
+    
+    <title>G Chat - AI Assistant</title>
+    <script>
+      // Single Page Apps for GitHub Pages
+      // https://github.com/rafgraph/spa-github-pages
+      // This script takes the current url and converts the path and query
+      // string into just a query string, and then redirects the browser
+      // to the new url with only a query string and hash fragment,
+      // e.g., https://www.foo.tld/one/two?a=b&c=d#qwe, becomes
+      // https://www.foo.tld/?/one/two&a=b~and~c=d#qwe
+      // Note: this 404.html file must be at least 512 bytes for it to work
+      // with Internet Explorer (it is currently > 512 bytes)
+
+      // If you're creating a Project Pages site and NOT using a custom domain,
+      // then set segmentCount to 1 (enterprise users may need to set it to > 1).
+      // This way the code will only replace the route part and not the real directory.
+      // For example, if your app is served from https://username.github.io/repo-name/,
+      // and your repo is at https://github.com/username/repo-name,
+      // then set segmentCount to 1. If your app is served from
+      // https://username.github.io/repo-name/one/two, then set segmentCount to 3.
+      var segmentCount = 1;
+
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + segmentCount).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
+
+    </script>
+  </head>
+  <body style="background-color: #171717; color: #ffffff; margin: 0; padding: 0;">
+    <div id="root" style="min-height: 100vh; width: 100vw;"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

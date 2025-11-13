@@ -68,6 +68,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      input: {
+        main: './index.html',
+        '404': './public/404.html',
+      },
+    },
   },
+  publicDir: 'public',
 })
 

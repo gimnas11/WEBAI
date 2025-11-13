@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './config/firebase';
@@ -33,7 +33,7 @@ function AppContent({ user, setUser, loading, onLogin, onLogout, justLoggedIn, s
 
   // Redirect admin to dashboard after login (only once after login)
   useEffect(() => {
-    if (user && user.role === 'admin' && justLoggedIn && window.location.pathname !== '/admin') {
+    if (user && user.role === 'admin' && justLoggedIn && window.location.hash !== '#/admin') {
       console.log('Admin detected, redirecting to dashboard...', user);
       navigate('/admin', { replace: true });
       setJustLoggedIn(false);
@@ -195,8 +195,11 @@ function App() {
     setShowApiKeyModal(false);
   };
 
+  // Get base path from vite config or environment
+  const basePath = import.meta.env.BASE_URL || '/WEBAI/';
+  
   return (
-    <BrowserRouter>
+    <HashRouter basename={basePath}>
       <AppContent 
         user={user} 
         setUser={setUser} 
@@ -250,7 +253,7 @@ function App() {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
