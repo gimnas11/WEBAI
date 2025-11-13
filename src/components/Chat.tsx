@@ -161,7 +161,7 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 relative w-full max-w-full overflow-hidden" style={{ height: '100vh', width: '100vw', maxWidth: '100vw' }}>
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 relative w-full max-w-full overflow-hidden" style={{ minHeight: '100vh', width: '100%', maxWidth: '100vw' }}>
       {/* Sidebar Overlay for Mobile */}
       {sidebarOpen && (
         <div 

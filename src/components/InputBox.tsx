@@ -92,7 +92,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 md:px-4 py-3 md:py-4 flex-shrink-0 z-10">
+    <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 md:px-4 py-3 md:py-4 flex-shrink-0 z-10 relative" style={{ width: '100%', maxWidth: '100%' }}>
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
         {/* Preview uploaded image */}
         {uploadedImage && (
