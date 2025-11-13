@@ -14,10 +14,10 @@ interface UserData {
 }
 
 interface AdminDashboardProps {
-  onNavigateBack?: () => void;
+  onNavigateBack: () => void;
 }
 
-export function AdminDashboard({ onNavigateBack }: AdminDashboardProps = {}) {
+export function AdminDashboard({ onNavigateBack }: AdminDashboardProps) {
   const { currentUser, logout } = useAuth();
   const { success, error: showError } = useToast();
   const [users, setUsers] = useState<UserData[]>([]);
@@ -138,22 +138,16 @@ export function AdminDashboard({ onNavigateBack }: AdminDashboardProps = {}) {
     try {
       await logout();
       // Navigate back to chat view after logout
-      if (onNavigateBack) {
-        onNavigateBack();
-      } else {
-        window.location.href = '/';
-      }
+      onNavigateBack();
     } catch (error) {
       console.error('Logout error:', error);
+      // Even if logout fails, navigate back
+      onNavigateBack();
     }
   };
 
   const handleBackToChat = () => {
-    if (onNavigateBack) {
-      onNavigateBack();
-    } else {
-      window.location.href = '/';
-    }
+    onNavigateBack();
   };
 
   const formatDate = (timestamp: any): string => {
