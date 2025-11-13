@@ -8,13 +8,25 @@ type AuthModalView = 'login' | 'forgot-password' | null;
 
 interface UserMenuProps {
   onNavigateToAdmin?: () => void;
+  onRequestLogin?: boolean;
+  onLoginRequestHandled?: () => void;
 }
 
-export function UserMenu({ onNavigateToAdmin }: UserMenuProps = {}) {
+export function UserMenu({ onNavigateToAdmin, onRequestLogin, onLoginRequestHandled }: UserMenuProps = {}) {
   const { currentUser, isEmailVerified, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [authModalView, setAuthModalView] = useState<AuthModalView>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Open login modal when requested from outside (e.g., Files button)
+  useEffect(() => {
+    if (onRequestLogin && !currentUser) {
+      setAuthModalView('login');
+      if (onLoginRequestHandled) {
+        onLoginRequestHandled();
+      }
+    }
+  }, [onRequestLogin, currentUser, onLoginRequestHandled]);
 
   // Close menu when clicking outside
   useEffect(() => {

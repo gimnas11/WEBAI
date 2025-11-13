@@ -21,6 +21,7 @@ function App() {
   const [currentView, setCurrentView] = useState<'chat' | 'files' | 'admin'>('chat');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [justLoggedIn, setJustLoggedIn] = useState(false);
+  const [requestLogin, setRequestLogin] = useState(false);
   const { toasts, removeToast, success, error: showErrorToast } = useToast();
 
   // Debug: Verify File Manager button exists after render
@@ -208,30 +209,33 @@ function App() {
               </svg>
               <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Chat</span>
             </button>
-            {/* File Manager Button - Only show if logged in */}
-            {currentUser && (
-              <button
-                id="file-manager-button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('✅ File Manager button clicked!');
+            {/* File Manager Button - Always show, require login when clicked */}
+            <button
+              id="file-manager-button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('✅ File Manager button clicked!');
+                if (currentUser) {
                   setCurrentView('files');
-                }}
-                className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
-                  currentView === 'files'
-                    ? 'bg-blue-600 border-blue-400 text-white'
-                    : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
-                }`}
-                title="File Manager - Upload ZIP and edit code"
-                aria-label="Open File Manager"
-              >
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
-                <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Files</span>
-              </button>
-            )}
+                } else {
+                  // Show login modal if not logged in
+                  setRequestLogin(true);
+                }
+              }}
+              className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
+                currentView === 'files'
+                  ? 'bg-blue-600 border-blue-400 text-white'
+                  : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
+              }`}
+              title={currentUser ? "File Manager - Upload ZIP and edit code" : "File Manager - Login required"}
+              aria-label="Open File Manager"
+            >
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+              <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Files</span>
+            </button>
             {/* Admin Dashboard Button - Only show if admin */}
             {currentUser && currentUser.role === 'admin' && (
               <button
@@ -251,7 +255,11 @@ function App() {
               </button>
             )}
             {/* User Menu */}
-            <UserMenu onNavigateToAdmin={() => setCurrentView('admin')} />
+            <UserMenu 
+              onNavigateToAdmin={() => setCurrentView('admin')}
+              onRequestLogin={requestLogin}
+              onLoginRequestHandled={() => setRequestLogin(false)}
+            />
           </div>
         </header>
 
