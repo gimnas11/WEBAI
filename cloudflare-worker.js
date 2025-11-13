@@ -117,43 +117,73 @@ export default {
         let hfResponse;
         let lastError;
         
-        // Try background removal using Hugging Face
-        // Note: Model availability may vary, trying multiple approaches
+        // Try background removal using Hugging Face router endpoint
+        // Old API is deprecated (410), must use router endpoint
         try {
-          // First, try old inference API (might still work)
-          hfResponse = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${hfToken}`,
-            },
-            body: JSON.stringify({
-              inputs: image, // Base64 image data
-            }),
-          });
+          // Use router endpoint - try different model paths
+          const models = [
+            'briaai/RMBG-1.4',
+            'briaai/RMBG-2.0',
+            'levihsu/OOTDiffusion',
+          ];
           
-          console.log(`[Worker] Old API response status: ${hfResponse.status}`);
+          let lastError;
+          let triedModels = [];
           
-          // If 404 or not available, try router endpoint
-          if (hfResponse.status === 404 || hfResponse.status === 503) {
-            console.log('[Worker] Old API not available, trying router endpoint...');
-            hfResponse = await fetch('https://router.huggingface.co/hf-inference/models/briaai/RMBG-1.4', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${hfToken}`,
-              },
-              body: JSON.stringify({
-                inputs: image,
+          for (const modelPath of models) {
+            try {
+              console.log(`[Worker] Trying model: ${modelPath}`);
+              triedModels.push(modelPath);
+              
+              hfResponse = await fetch(`https://router.huggingface.co/hf-inference/models/${modelPath}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${hfToken}`,
+                },
+                body: JSON.stringify({
+                  inputs: image, // Base64 image data
+                }),
+              });
+              
+              console.log(`[Worker] Response status from ${modelPath}: ${hfResponse.status}`);
+              
+              // If successful (200) or processing (202), break
+              if (hfResponse.status === 200 || hfResponse.status === 202) {
+                break;
+              }
+              
+              // If 404, try next model
+              if (hfResponse.status === 404) {
+                continue;
+              }
+              
+              // For other errors, break and handle
+              break;
+            } catch (error) {
+              console.error(`[Worker] Error with model ${modelPath}:`, error);
+              lastError = error;
+              continue;
+            }
+          }
+          
+          // If all models failed or 404
+          if (!hfResponse || hfResponse.status === 404) {
+            return new Response(
+              JSON.stringify({ 
+                error: `Background removal model tidak ditemukan. Tried models: ${triedModels.join(', ')}. Model mungkin tidak tersedia di Hugging Face router endpoint. Silakan cek ketersediaan model atau gunakan service alternatif.` 
               }),
-            });
-            console.log(`[Worker] Router endpoint response status: ${hfResponse.status}`);
+              {
+                status: 404,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              }
+            );
           }
         } catch (error) {
           console.error('[Worker] Error calling Hugging Face API:', error);
           return new Response(
             JSON.stringify({ 
-              error: `Failed to call background removal API: ${error.message}. Model briaai/RMBG-1.4 mungkin tidak tersedia. Silakan cek ketersediaan model di Hugging Face atau gunakan service alternatif.` 
+              error: `Failed to call background removal API: ${error.message}. Silakan cek ketersediaan model di Hugging Face atau gunakan service alternatif.` 
             }),
             {
               status: 500,
