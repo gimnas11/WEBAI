@@ -1,57 +1,145 @@
 import { useState, useEffect } from 'react';
-import { Sidebar } from './components/Sidebar';
-import { ChatWindow } from './components/ChatWindow';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from './config/firebase';
+import { Chat } from './components/Chat';
+import { FileManager } from './components/FileManager';
+import { AdminDashboard } from './components/AdminDashboard';
 import { APIKeyModal } from './components/APIKeyModal';
 import { ToastContainer } from './components/ToastContainer';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
-import { UserMenu } from './components/UserMenu';
-import { FileManager } from './components/FileManager';
-import { AdminDashboard } from './components/AdminDashboard';
-import { useChat } from './hooks/useChat';
 import { useToast } from './hooks/useToast';
-import { useAuth } from './contexts/AuthContext';
 import { storage } from './utils/localStorage';
 import { Provider } from './utils/api';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+}
+
+function AppContent({ user, setUser, loading, onLogin, onLogout, justLoggedIn, setJustLoggedIn }: {
+  user: User | null;
+  setUser: (user: User | null) => void;
+  loading: boolean;
+  onLogin: (userData: User) => void;
+  onLogout: () => void;
+  justLoggedIn: boolean;
+  setJustLoggedIn: (value: boolean) => void;
+}) {
+  const navigate = useNavigate();
+
+  // Redirect admin to dashboard after login (only once after login)
+  useEffect(() => {
+    if (user && user.role === 'admin' && justLoggedIn && window.location.pathname !== '/admin') {
+      console.log('Admin detected, redirecting to dashboard...', user);
+      navigate('/admin', { replace: true });
+      setJustLoggedIn(false);
+    }
+  }, [user, navigate, justLoggedIn, setJustLoggedIn]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<Chat user={user} onLogout={onLogout} onLogin={onLogin} />} />
+      <Route 
+        path="/files" 
+        element={
+          user ? (
+            <FileManager user={user} onLogout={onLogout} />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        } 
+      />
+      <Route 
+        path="/admin" 
+        element={
+          user && user.role === 'admin' ? (
+            <AdminDashboard user={user} onLogout={onLogout} />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        } 
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
 function App() {
-  const { currentUser } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [provider, setProvider] = useState<Provider>(storage.getProvider());
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [currentView, setCurrentView] = useState<'chat' | 'files' | 'admin'>('chat');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [justLoggedIn, setJustLoggedIn] = useState(false);
-  const [requestLogin, setRequestLogin] = useState(false);
-  const { toasts, removeToast, success, error: showErrorToast } = useToast();
+  const { toasts, removeToast } = useToast();
 
-  // Debug: Verify File Manager button exists after render
   useEffect(() => {
-    const checkButton = () => {
-      const btn = document.getElementById('file-manager-button');
-      if (btn) {
-        console.log('✅ File Manager button FOUND in DOM!', btn);
-        console.log('Button styles:', window.getComputedStyle(btn));
+    // Listen to auth state changes
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // Get user data from Firestore
+        try {
+          if (db) {
+            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              setUser({
+                id: firebaseUser.uid,
+                name: userData.displayName || userData.name || firebaseUser.displayName || 'User',
+                email: firebaseUser.email || '',
+                role: userData.role || 'user',
+              });
+            } else {
+              // Create user document if it doesn't exist
+              setUser({
+                id: firebaseUser.uid,
+                name: firebaseUser.displayName || 'User',
+                email: firebaseUser.email || '',
+                role: 'user',
+              });
+            }
+          } else {
+            setUser({
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || 'User',
+              email: firebaseUser.email || '',
+              role: 'user',
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setUser({
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || 'User',
+            email: firebaseUser.email || '',
+            role: 'user',
+          });
+        }
       } else {
-        console.error('❌ File Manager button NOT FOUND in DOM!');
+        setUser(null);
       }
-    };
-    // Check immediately and after a short delay
-    checkButton();
-    setTimeout(checkButton, 100);
-  }, []);
+      setLoading(false);
+    });
 
-  const {
-    chats,
-    currentChat,
-    isLoading,
-    error,
-    createNewChat,
-    selectChat,
-    deleteChat,
-    renameChat,
-    deleteAllChats,
-    sendMessage,
-  } = useChat();
+    return () => unsubscribe();
+  }, []);
 
   // Check for API key on mount
   useEffect(() => {
@@ -74,33 +162,30 @@ function App() {
     }
   }, []);
 
-  // Redirect admin to dashboard after login
-  useEffect(() => {
-    if (currentUser && currentUser.role === 'admin' && justLoggedIn && currentView !== 'admin') {
-      setCurrentView('admin');
-      setJustLoggedIn(false);
+  const handleLogin = (userData: User) => {
+    console.log('Login handler called with userData:', userData);
+    setUser(userData);
+    // Set flag to trigger redirect for admin (only after login, not on page refresh)
+    if (userData.role === 'admin') {
+      setJustLoggedIn(true);
     }
-  }, [currentUser, justLoggedIn, currentView]);
+  };
 
-  // Track login state
-  useEffect(() => {
-    if (currentUser) {
-      // Check if this is a fresh login (not just page refresh)
-      const lastLoginTime = sessionStorage.getItem('lastLoginTime');
-      const now = Date.now();
-      if (!lastLoginTime || (now - parseInt(lastLoginTime)) > 5000) {
-        setJustLoggedIn(true);
-        sessionStorage.setItem('lastLoginTime', now.toString());
+  const handleLogout = async () => {
+    try {
+      if (auth) {
+        const { signOut } = await import('firebase/auth');
+        await signOut(auth);
       }
+      setUser(null);
+      setToast({ type: 'success', message: 'Logged out successfully!' });
+      setTimeout(() => setToast(null), 3000);
+    } catch (error) {
+      console.error('Logout error:', error);
+      setToast({ type: 'error', message: 'Error logging out. Please try again.' });
+      setTimeout(() => setToast(null), 3000);
     }
-  }, [currentUser]);
-
-  // Show toast when error occurs
-  useEffect(() => {
-    if (error) {
-      showErrorToast(error);
-    }
-  }, [error, showErrorToast]);
+  };
 
   const handleSaveApiKey = (key: string, selectedProvider: Provider) => {
     storage.setApiKey(key);
@@ -108,190 +193,49 @@ function App() {
     setApiKey(key);
     setProvider(selectedProvider);
     setShowApiKeyModal(false);
-    success('API key saved successfully!');
   };
 
-  const handleSendMessage = (message: string) => {
-    // Can send message if API key exists OR proxy is available
-    const proxyUrl = import.meta.env.VITE_PROXY_URL;
-    if (apiKey || proxyUrl) {
-      sendMessage(message, apiKey, provider);
-    } else {
-      showErrorToast('Please set your API key first');
-    }
-  };
-
-  const handleCopyCode = () => {
-    success('Code copied to clipboard!');
-  };
-
-  // Show admin dashboard if admin and viewing admin
-  if (currentView === 'admin' && currentUser?.role === 'admin') {
-    return <AdminDashboard onNavigateBack={() => setCurrentView('chat')} />;
-  }
-
-  // Main app - always visible, login via UserMenu
   return (
-    <div className="flex h-screen bg-chat-darker text-white overflow-hidden">
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setSidebarOpen(true)}
-        className="fixed top-3 left-3 z-30 md:hidden p-2.5 bg-chat-dark hover:bg-chat-hover rounded-lg border border-chat-border touch-manipulation"
-        aria-label="Open menu"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
-      {/* Sidebar - Only show in chat view */}
-      {currentView === 'chat' && (
-        <Sidebar
-          chats={chats}
-          currentChatId={currentChat?.id || null}
-          onSelectChat={(id) => {
-            selectChat(id);
-            setSidebarOpen(false);
-          }}
-          onNewChat={() => {
-            createNewChat();
-            setSidebarOpen(false);
-          }}
-          onDeleteChat={deleteChat}
-          onRenameChat={renameChat}
-          onDeleteAllChats={() => {
-            if (confirm('Are you sure you want to delete all chats? This cannot be undone.')) {
-              deleteAllChats();
-            }
-          }}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-14 sm:h-16 bg-chat-darker border-b border-chat-border flex items-center justify-between pl-14 md:pl-3 sm:pl-4 md:px-6 pr-3 sm:pr-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <img
-              src={`${import.meta.env.BASE_URL}Gambar/ChatGPT_Image_Nov_11__2025__07_22_25_AM-removebg-preview.png`}
-              alt="G Logo"
-              className="h-7 w-7 sm:h-8 sm:w-8 object-contain"
-              onError={(e) => {
-                // Fallback if image doesn't load
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-            <h1 className="text-base sm:text-lg font-semibold">G Chat</h1>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
-            {error && currentView === 'chat' && (
-              <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-xs sm:text-sm flex-shrink">
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="flex-1 truncate">{error}</span>
-              </div>
-            )}
-            {/* Navigation Buttons */}
-            <button
-              onClick={() => setCurrentView('chat')}
-              className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
-                currentView === 'chat'
-                  ? 'bg-blue-600 border-blue-400 text-white'
-                  : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
-              }`}
-              title="Chat"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
-              <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Chat</span>
-            </button>
-            {/* File Manager Button - Always show, require login when clicked */}
-            <button
-              id="file-manager-button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('✅ File Manager button clicked!');
-                if (currentUser) {
-                  setCurrentView('files');
-                } else {
-                  // Show login modal if not logged in
-                  setRequestLogin(true);
-                }
-              }}
-              className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
-                currentView === 'files'
-                  ? 'bg-blue-600 border-blue-400 text-white'
-                  : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
-              }`}
-              title={currentUser ? "File Manager - Upload ZIP and edit code" : "File Manager - Login required"}
-              aria-label="Open File Manager"
-            >
+    <BrowserRouter>
+      <AppContent 
+        user={user} 
+        setUser={setUser} 
+        loading={loading} 
+        onLogin={handleLogin} 
+        onLogout={handleLogout}
+        justLoggedIn={justLoggedIn}
+        setJustLoggedIn={setJustLoggedIn}
+      />
+      
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] max-w-md ${
+            toast.type === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}>
+            {toast.type === 'success' ? (
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Files</span>
-            </button>
-            {/* Admin Dashboard Button - Only show if admin */}
-            {currentUser && currentUser.role === 'admin' && (
-              <button
-                onClick={() => setCurrentView('admin')}
-                className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
-                  currentView === 'admin'
-                    ? 'bg-purple-600 border-purple-400 text-white'
-                    : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
-                }`}
-                title="Admin Dashboard"
-                aria-label="Open Admin Dashboard"
-              >
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Admin</span>
-              </button>
+            ) : (
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             )}
-            {/* User Menu */}
-            <UserMenu 
-              onNavigateToAdmin={() => setCurrentView('admin')}
-              onRequestLogin={requestLogin}
-              onLoginRequestHandled={() => setRequestLogin(false)}
-            />
+            <p className="flex-1 text-sm font-medium">{toast.message}</p>
+            <button
+              onClick={() => setToast(null)}
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-        </header>
-
-        {/* Content based on current view */}
-        {currentView === 'chat' ? (
-          <ChatWindow
-            chat={currentChat}
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-            disabled={!apiKey && !import.meta.env.VITE_PROXY_URL}
-            onCopyCode={handleCopyCode}
-          />
-        ) : currentUser ? (
-          <FileManager
-            onClose={() => setCurrentView('chat')}
-            apiKey={apiKey}
-            provider={provider}
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <p className="text-lg mb-4">Please login to access File Manager</p>
-              <button
-                onClick={() => setCurrentView('chat')}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-              >
-                Back to Chat
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* API Key Modal */}
       {showApiKeyModal && (
@@ -306,10 +250,8 @@ function App() {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
-
-    </div>
+    </BrowserRouter>
   );
 }
 
 export default App;
-

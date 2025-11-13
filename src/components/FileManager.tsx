@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import JSZip from 'jszip';
 import Editor from '@monaco-editor/react';
 import { useToast } from '../hooks/useToast';
@@ -7,12 +8,18 @@ import { fileStorage } from '../utils/fileStorage';
 import { streamChatCompletion } from '../utils/api';
 import { Provider } from '../utils/api';
 import { Message } from '../utils/localStorage';
+import { storage } from '../utils/localStorage';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+}
 
 interface FileManagerProps {
-  onClose: () => void;
-  onAskAI?: (question: string, context?: string) => void;
-  apiKey?: string | null;
-  provider?: Provider;
+  user: User;
+  onLogout: () => void;
 }
 
 interface FileNode {
@@ -23,8 +30,11 @@ interface FileNode {
   children?: FileNode[];
 }
 
-export function FileManager({ onClose, apiKey, provider = 'groq' }: FileManagerProps) {
-  const { currentUser, logout } = useAuth();
+export function FileManager({ user, onLogout }: FileManagerProps) {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const apiKey = storage.getApiKey();
+  const provider: Provider = storage.getProvider();
   const [files, setFiles] = useState<FileNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileNode | null>(null);
   const [fileContent, setFileContent] = useState('');
@@ -640,14 +650,12 @@ export function FileManager({ onClose, apiKey, provider = 'groq' }: FileManagerP
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      onClose();
-    } catch (error) {
-      console.error('Logout error:', error);
+  // Redirect to home if not logged in
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
     }
-  };
+  }, [user, navigate]);
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 relative">
@@ -817,24 +825,22 @@ export function FileManager({ onClose, apiKey, provider = 'groq' }: FileManagerP
               Ask AI
             </button>
             <button
-              onClick={onClose}
+              onClick={() => navigate('/')}
               className="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 touch-manipulation whitespace-nowrap"
             >
               Chat
             </button>
-            {currentUser && (
-              <>
-                <span className="hidden sm:inline text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate max-w-[100px] md:max-w-none">
-                  {currentUser.displayName || currentUser.email}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 touch-manipulation whitespace-nowrap"
-                >
-                  Logout
-                </button>
-              </>
-            )}
+            <>
+              <span className="hidden sm:inline text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate max-w-[100px] md:max-w-none">
+                {user.name}
+              </span>
+              <button
+                onClick={onLogout}
+                className="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 touch-manipulation whitespace-nowrap"
+              >
+                Logout
+              </button>
+            </>
           </div>
         </header>
 
