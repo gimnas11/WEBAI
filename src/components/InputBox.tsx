@@ -92,7 +92,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 md:px-4 py-3 md:py-4">
+    <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 md:px-4 py-3 md:py-4 flex-shrink-0 z-10">
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
         {/* Preview uploaded image */}
         {uploadedImage && (
@@ -144,6 +144,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
             onChange={(e) => setInput(e.target.value)}
             placeholder={disabled ? 'Please set your API key first' : uploadedImage ? 'Describe what to do with the image...' : 'Type your message...'}
             className="flex-1 px-3 md:px-4 py-2.5 md:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+            style={{ fontSize: '16px' }}
             disabled={isLoading || disabled}
           />
           <button
