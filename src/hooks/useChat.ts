@@ -144,12 +144,10 @@ export function useChat() {
       if (isImageGenerationRequest(content)) {
         const imagePrompt = extractImagePrompt(content);
         
-        // Show informative message about feature status
-        assistantContent = '**Fitur Pembuatan Gambar Sedang Dalam Pengembangan**\n\n' +
-          'Maaf, fitur pembuatan gambar saat ini belum tersedia. Fitur ini sedang dalam tahap pengembangan dan akan segera hadir di update berikutnya.\n\n' +
-          'Terima kasih atas pengertiannya! 🙏';
-
-        const imageMessage: Message = {
+        // Show loading message
+        assistantContent = '🖼️ **Membuat gambar...**\n\nSedang memproses permintaan Anda. Mohon tunggu sebentar.';
+        
+        const loadingMessage: Message = {
           id: assistantMessageId,
           role: 'assistant',
           content: assistantContent,
@@ -157,15 +155,84 @@ export function useChat() {
           isImageGeneration: true,
         };
 
-        const imageChat: Chat = {
+        const loadingChat: Chat = {
           ...updatedChat,
-          messages: [...updatedMessages, imageMessage],
+          messages: [...updatedMessages, loadingMessage],
           updatedAt: Date.now(),
         };
 
-        setCurrentChat(imageChat);
-        setChats(prev => prev.map(c => c.id === chat.id ? imageChat : c));
-        storage.saveChat(imageChat);
+        setCurrentChat(loadingChat);
+        setChats(prev => prev.map(c => c.id === chat.id ? loadingChat : c));
+        storage.saveChat(loadingChat);
+
+        // Generate image
+        const imageResult = await generateImage(imagePrompt);
+        
+        if (imageResult.error) {
+          // Show error message
+          assistantContent = `❌ **Gagal membuat gambar**\n\n${imageResult.error}\n\n**Tips:**\n- Pastikan koneksi internet Anda stabil\n- Coba lagi dalam beberapa saat\n- Jika menggunakan proxy, pastikan proxy sudah dikonfigurasi dengan benar`;
+          
+          const errorMessage: Message = {
+            id: assistantMessageId,
+            role: 'assistant',
+            content: assistantContent,
+            timestamp: Date.now(),
+            isImageGeneration: true,
+          };
+
+          const errorChat: Chat = {
+            ...updatedChat,
+            messages: [...updatedMessages, errorMessage],
+            updatedAt: Date.now(),
+          };
+
+          setCurrentChat(errorChat);
+          setChats(prev => prev.map(c => c.id === chat.id ? errorChat : c));
+          storage.saveChat(errorChat);
+        } else if (imageResult.imageUrl) {
+          // Show success message with image
+          assistantContent = `✅ **Gambar berhasil dibuat!**\n\nPrompt: "${imagePrompt}"`;
+          
+          const imageMessage: Message = {
+            id: assistantMessageId,
+            role: 'assistant',
+            content: assistantContent,
+            timestamp: Date.now(),
+            isImageGeneration: true,
+            imageUrl: imageResult.imageUrl,
+          };
+
+          const imageChat: Chat = {
+            ...updatedChat,
+            messages: [...updatedMessages, imageMessage],
+            updatedAt: Date.now(),
+          };
+
+          setCurrentChat(imageChat);
+          setChats(prev => prev.map(c => c.id === chat.id ? imageChat : c));
+          storage.saveChat(imageChat);
+        } else {
+          // Fallback error
+          assistantContent = '❌ **Gagal membuat gambar**\n\nTerjadi kesalahan yang tidak diketahui. Silakan coba lagi.';
+          
+          const fallbackMessage: Message = {
+            id: assistantMessageId,
+            role: 'assistant',
+            content: assistantContent,
+            timestamp: Date.now(),
+            isImageGeneration: true,
+          };
+
+          const fallbackChat: Chat = {
+            ...updatedChat,
+            messages: [...updatedMessages, fallbackMessage],
+            updatedAt: Date.now(),
+          };
+
+          setCurrentChat(fallbackChat);
+          setChats(prev => prev.map(c => c.id === chat.id ? fallbackChat : c));
+          storage.saveChat(fallbackChat);
+        }
       } else if (isOwnerQuestion(content)) {
         // Check if asking about owner - provide direct response
         assistantContent = 'G Chat dibuat oleh **GimnasIrwandi**. GimnasIrwandi adalah pembuat dan developer dari aplikasi AI Chat ini.';
@@ -186,6 +253,7 @@ export function useChat() {
 
         setCurrentChat(directChat);
         setChats(prev => prev.map(c => c.id === chat.id ? directChat : c));
+        storage.saveChat(directChat);
       } else if (isGimnasQuestion(content)) {
         assistantContent = 'Gimnas adalah pembuat AI ini';
         
@@ -205,6 +273,7 @@ export function useChat() {
 
         setCurrentChat(directChat);
         setChats(prev => prev.map(c => c.id === chat.id ? directChat : c));
+        storage.saveChat(directChat);
       } else {
         // Stream response from API
         for await (const chunk of streamChatCompletion(updatedMessages, apiKey, provider, (err) => {
@@ -232,26 +301,29 @@ export function useChat() {
         }
       }
 
-      // Final save
-      const finalMessages = [...updatedMessages, {
-        id: assistantMessageId,
-        role: 'assistant' as const,
-        content: assistantContent,
-        timestamp: Date.now(),
-      }];
+      // Final save (skip if already handled by special cases above)
+      const isSpecialCase = isImageGenerationRequest(content) || isOwnerQuestion(content) || isGimnasQuestion(content);
+      if (!isSpecialCase) {
+        const finalMessages = [...updatedMessages, {
+          id: assistantMessageId,
+          role: 'assistant' as const,
+          content: assistantContent,
+          timestamp: Date.now(),
+        }];
 
-      const finalChat: Chat = {
-        ...updatedChat,
-        messages: finalMessages,
-        title: chat.title === 'New Chat' && updatedMessages.length === 1
-          ? content.trim().slice(0, 50)
-          : chat.title,
-        updatedAt: Date.now(),
-      };
+        const finalChat: Chat = {
+          ...updatedChat,
+          messages: finalMessages,
+          title: chat.title === 'New Chat' && updatedMessages.length === 1
+            ? content.trim().slice(0, 50)
+            : chat.title,
+          updatedAt: Date.now(),
+        };
 
-      setCurrentChat(finalChat);
-      setChats(prev => prev.map(c => c.id === chat.id ? finalChat : c));
-      storage.saveChat(finalChat);
+        setCurrentChat(finalChat);
+        setChats(prev => prev.map(c => c.id === chat.id ? finalChat : c));
+        storage.saveChat(finalChat);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
